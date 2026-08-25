@@ -1,0 +1,64 @@
+# ====================== Visual Studio / .NET ======================
+
+# Carpetas generadas por build
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Caché y configuración local de Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Resultados de pruebas
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Publicación (IIS / dotnet publish)
+[Pp]ublish/
+[Pp]ublishProfiles/
+*.publish.xml
+*.pubxml
+*.pubxml.user
+publish.proj
+
+# Paquetes NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# ====================== ASP.NET Core ======================
+
+# Secretos locales (nunca versionar credenciales)
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+secrets.json
+
+# Archivos temporales del runtime
+*.log
+*.pidb
+*.svclog
+
+# ====================== Sistema operativo ======================
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ====================== Varios ======================
+
+node_modules/
+bower_components/
+*.cache
+*.bak
+*.[Pp]ublish.xml
