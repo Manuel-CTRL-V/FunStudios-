@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Acceso Denegado";
+    Layout = "_Layout";
+}
+
+<div class="max-w-lg mx-auto mt-stack-lg">
+    <div class="bg-surface-container-lowest rounded-xl shadow-soft p-container-margin flex flex-col items-center text-center">
+        <div class="w-20 h-20 rounded-full bg-error-container flex items-center justify-center mb-stack-md">
+            <span class="material-symbols-outlined text-[40px]" style="color:#ba1a1a;">lock_person</span>
+        </div>
+        <h2 class="text-headline-md text-on-surface">Acceso restringido</h2>
+        <p class="text-body-lg text-on-surface-variant mt-stack-sm">
+            Tu rol no tiene permisos para ver esta pantalla.
+            Si necesitas acceso, consulta con un administrador.
+        </p>
+        <a asp-controller="Dashboard" asp-action="Index"
+           class="mt-stack-lg inline-flex items-center gap-2 bg-primary text-on-primary font-label-lg px-8 py-3 rounded-full hover:bg-surface-tint btn-press shadow-sm transition-all">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver al Panel
+        </a>
+    </div>
+</div>

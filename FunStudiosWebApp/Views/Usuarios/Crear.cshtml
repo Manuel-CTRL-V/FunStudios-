@@ -1,0 +1,94 @@
+@model UsuarioFormViewModel
+@{
+    ViewData["Title"] = "Nuevo Usuario";
+}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-stack-lg">
+        <h2 class="text-headline-lg text-on-background">Nuevo Usuario</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">Cree una cuenta de acceso para el personal (RF11).</p>
+    </div>
+
+    <form asp-controller="Usuarios" asp-action="Crear" method="post"
+          class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft flex flex-col gap-gutter">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="text-error font-label-md"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+            <div class="flex flex-col gap-1">
+                <label asp-for="Nombres" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombres</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">person</span>
+                    <input asp-for="Nombres" placeholder="ej. Laura"
+                           class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none" />
+                </div>
+                <span asp-validation-for="Nombres" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="Apellidos" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Apellidos</label>
+                <input asp-for="Apellidos" placeholder="ej. Ortega Ruiz"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+                <span asp-validation-for="Apellidos" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="NombreUsuario" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre de usuario</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">alternate_email</span>
+                    <input asp-for="NombreUsuario" placeholder="ej. lortega"
+                           class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none" />
+                </div>
+                <span asp-validation-for="NombreUsuario" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="Password" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Contraseña</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">key</span>
+                    <input asp-for="Password" type="password" placeholder="Mínimo 6 caracteres"
+                           class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none" />
+                </div>
+                <span asp-validation-for="Password" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="RolId" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Rol</label>
+                <select asp-for="RolId" class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 h-[48px] focus:outline-none">
+                    <option value="" disabled selected>— Seleccione —</option>
+                    @foreach (var r in Model.Roles)
+                    {
+                        <option value="@r.RolId">@r.NombreRol</option>
+                    }
+                </select>
+                <span asp-validation-for="RolId" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1 justify-end pb-1">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input type="checkbox" asp-for="Activo" class="peer sr-only" />
+                    <div class="w-6 h-6 rounded border-2 border-outline peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center group-hover:border-primary shrink-0">
+                        <span class="material-symbols-outlined text-white text-[16px]">check</span>
+                    </div>
+                    <span class="text-body-md text-on-surface">Usuario activo (puede iniciar sesión)</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex justify-end gap-stack-md mt-stack-md">
+            <a asp-controller="Usuarios" asp-action="Index"
+               class="flex items-center justify-center px-gutter h-touch-target bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="flex items-center gap-2 bg-primary hover:bg-surface-tint text-on-primary font-label-lg px-gutter h-touch-target rounded-full btn-press shadow-sm transition-all cursor-pointer">
+                <span class="material-symbols-outlined">person_add</span> Crear usuario
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

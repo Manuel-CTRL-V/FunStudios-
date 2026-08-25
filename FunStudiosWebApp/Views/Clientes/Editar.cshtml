@@ -1,0 +1,88 @@
+@model ClienteEditarViewModel
+@{
+    ViewData["Title"] = $"Editar · {Model.Nombre}";
+}
+
+<div class="max-w-3xl mx-auto">
+    <div class="mb-stack-lg">
+        <h2 class="text-headline-lg text-on-background">Editar Cliente</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">
+            Datos de <b>@Model.Nombre</b> y teléfonos de su familia. El enrolamiento biométrico no se modifica aquí.
+        </p>
+    </div>
+
+    <form asp-controller="Clientes" asp-action="Editar" asp-route-id="@Model.ClienteId" method="post"
+          class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft flex flex-col gap-gutter">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ClienteId" />
+
+        <!-- Info del niño -->
+        <div class="flex items-center gap-2 mb-unit">
+            <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-primary-container text-sm">face</span>
+            </div>
+            <h3 class="text-headline-sm text-on-surface">Info del Niño</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+            <div class="flex flex-col gap-1">
+                <label asp-for="Nombre" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Niño</label>
+                <input asp-for="Nombre"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+                <span asp-validation-for="Nombre" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="FechaNacimiento" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Fecha de Nacimiento</label>
+                <input asp-for="FechaNacimiento" type="date" max="@DateTime.Now.ToString("yyyy-MM-dd")"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+                <span asp-validation-for="FechaNacimiento" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label asp-for="NotasMedicas" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Notas médicas (opcional)</label>
+                <textarea asp-for="NotasMedicas" rows="2"
+                          class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-[1rem] py-3 px-4 focus:outline-none"></textarea>
+            </div>
+        </div>
+
+        <!-- Teléfonos de la familia -->
+        <div class="flex items-center gap-2 mb-unit pt-stack-md border-t border-outline-variant/30">
+            <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-primary-container text-sm">family_restroom</span>
+            </div>
+            <h3 class="text-headline-sm text-on-surface">Teléfonos de la Familia</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+            <div class="flex flex-col gap-1">
+                <label asp-for="TelefonoTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 1</label>
+                <input asp-for="TelefonoTutor1"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+                <span asp-validation-for="TelefonoTutor1" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="TelefonoTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 2 (opcional)</label>
+                <input asp-for="TelefonoTutor2"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex justify-end gap-stack-md mt-stack-md">
+            <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@Model.ClienteId"
+               class="flex items-center justify-center px-gutter h-touch-target bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="flex items-center gap-2 bg-primary hover:bg-surface-tint text-on-primary font-label-lg px-gutter h-touch-target rounded-full btn-press shadow-sm transition-all cursor-pointer">
+                <span class="material-symbols-outlined">save</span> Guardar cambios
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

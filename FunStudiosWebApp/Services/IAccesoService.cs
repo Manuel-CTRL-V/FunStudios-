@@ -1,0 +1,19 @@
+using FunStudiosWebApp.ViewModels;
+
+namespace FunStudiosWebApp.Services;
+
+/// <summary>
+/// Lógica del checkpoint de acceso: escaneo biométrico, registro de entradas y
+/// salidas, acumulación de checks de fidelidad (RF5 a RF10).
+/// </summary>
+public interface IAccesoService
+{
+    /// <summary>Identifica al niño por su huella en la puerta (RF5).</summary>
+    Task<ResultadoEscaneoViewModel> EscanearAsync(EscanearRequest solicitud, int? usuarioId, string ip);
+
+    /// <summary>Registra la hora de entrada del cliente (RF6) aplicando las reglas de fidelidad.</summary>
+    Task<ResultadoRegistroEntradaViewModel> RegistrarEntradaAsync(RegistrarEntradaRequest solicitud, int? usuarioId, string ip);
+
+    /// <summary>Registra la hora de salida del cliente (RF7).</summary>
+    Task<ResultadoRegistroEntradaViewModel> RegistrarSalidaAsync(int clienteId, string ip);
+}

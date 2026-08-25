@@ -1,0 +1,180 @@
+@model InteligenciaNegocioViewModel
+@{
+    ViewData["Title"] = "Inteligencia de Negocio";
+
+    // Escalas para las gráficas de barras CSS
+    var maxIngresos = Model.SerieDiaria.Count == 0 ? 0 : Model.SerieDiaria.Max(p => p.IngresosDayPass);
+    var maxEntradas = Model.SerieDiaria.Count == 0 ? 0 : Model.SerieDiaria.Max(p => p.TotalEntradas);
+    var maxHora = Model.FlujoPorHoraHoy.Count == 0 ? 0 : Model.FlujoPorHoraHoy.Max(h => h.CantidadEntradas);
+}
+
+<!-- Encabezado + selector de periodo -->
+<div class="flex flex-col sm:flex-row justify-between sm:items-end gap-stack-md mb-stack-lg">
+    <div>
+        <h2 class="text-headline-lg text-on-background">Inteligencia de Negocio</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">Indicadores clave del negocio en los últimos días.</p>
+    </div>
+    <div class="flex bg-surface-container-high rounded-full p-1 gap-unit w-fit">
+        @foreach (var dias in new[] { 7, 14, 30 })
+        {
+            <a asp-controller="Reportes" asp-action="InteligenciaNegocio" asp-route-dias="@dias"
+               class="px-gutter py-2 rounded-full font-label-lg transition-colors @(Model.DiasAnalizados == dias ? "bg-primary text-on-primary shadow-soft" : "text-primary hover:bg-surface-bright")">
+                Últimos @dias días
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Tarjetas resumen del periodo -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-gutter">
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft border-l-8" style="border-left-color:#0077ce;">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Total entradas</p>
+        <p class="text-display-sm text-on-background font-bold">@Model.Resumen.TotalEntradas</p>
+        <p class="font-label-sm text-outline">en @Model.Resumen.DiasAnalizados día(s)</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft border-l-8" style="border-left-color:#e2165f;">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Day Passes cobrados</p>
+        <p class="text-display-sm text-secondary font-bold">@Model.Resumen.TotalDayPasses</p>
+        <p class="font-label-sm text-outline">@Model.Resumen.TotalIngresos.ToString("C0") ingresados</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft border-l-8" style="border-left-color:#268630;">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Promedio diario</p>
+        <p class="text-display-sm text-tertiary font-bold">@Model.Resumen.PromedioIngresoDiario.ToString("C0")</p>
+        <p class="font-label-sm text-outline">por concepto de Day Pass</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft border-l-8" style="border-left-color:#ffb300;">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Gratis canjeadas</p>
+        <p class="text-display-sm text-[#b26a00] font-bold">@Model.Resumen.TotalGratisCanjeadas</p>
+        <p class="font-label-sm text-outline">premios entregados (RF10)</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+
+    <!-- Gráfica: ingresos por día -->
+    <div class="lg:col-span-7 bg-surface-container-lowest rounded-xl p-gutter shadow-soft">
+        <h3 class="text-headline-sm text-on-surface flex items-center gap-2 mb-gutter">
+            <span class="material-symbols-outlined text-secondary">monitoring</span> Ingresos por día (Day Pass)
+        </h3>
+
+        @if (maxIngresos == 0)
+        {
+            <p class="text-center text-outline py-gutter">Sin ingresos registrados en el periodo.</p>
+        }
+        else
+        {
+            <div class="flex items-end justify-between gap-1 h-56">
+                @foreach (var punto in Model.SerieDiaria)
+                {
+                    var alturaPct = maxIngresos == 0 ? 0 : Math.Round(punto.IngresosDayPass / maxIngresos * 100);
+                    <div class="flex-1 flex flex-col items-center justify-end h-full group relative">
+                        <span class="absolute -top-1 bg-on-surface text-surface font-label-sm px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none">
+                            @punto.Fecha.ToString("dd/MM"): @punto.IngresosDayPass.ToString("C0")
+                        </span>
+                        <div class="w-full rounded-t-lg bg-gradient-to-t from-secondary to-[#ffda6a] transition-all hover:opacity-80 min-h-[3px]"
+                             style="height:@(alturaPct)%"></div>
+                    </div>
+                }
+            </div>
+            <div class="flex justify-between mt-2 border-t border-outline-variant/20 pt-2">
+                <span class="font-label-sm text-on-surface-variant">@Model.SerieDiaria[0].Fecha.ToString("dd MMM")</span>
+                <span class="font-label-sm text-on-surface-variant">@Model.SerieDiaria[^1].Fecha.ToString("dd MMM")</span>
+            </div>
+        }
+
+        <!-- Segunda serie compacta: entradas totales por día -->
+        @if (maxEntradas > 0)
+        {
+            <div class="mt-gutter pt-gutter border-t border-outline-variant/20">
+                <h4 class="font-label-lg text-on-surface-variant mb-stack-md">Entradas totales por día</h4>
+                <div class="flex items-end justify-between gap-1 h-24">
+                    @foreach (var punto in Model.SerieDiaria)
+                    {
+                        var alturaPct = Math.Round(punto.TotalEntradas * 100.0 / maxEntradas);
+                        <div class="flex-1 flex flex-col items-center justify-end h-full" title="@punto.Fecha.ToString("dd/MM"): @punto.TotalEntradas entradas">
+                            <div class="w-full rounded-t bg-primary/70 hover:bg-primary transition-colors min-h-[2px]" style="height:@(alturaPct)%"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Gráfica: flujo por hora hoy -->
+    <div class="lg:col-span-5 bg-surface-container-lowest rounded-xl p-gutter shadow-soft">
+        <h3 class="text-headline-sm text-on-surface flex items-center gap-2 mb-gutter">
+            <span class="material-symbols-outlined text-tertiary">schedule</span> Flujo por hora (hoy)
+        </h3>
+
+        @if (!Model.FlujoPorHoraHoy.Any())
+        {
+            <p class="text-center text-outline py-gutter">Aún no hay entradas hoy.</p>
+        }
+        else
+        {
+            <div class="flex items-end justify-around gap-1 h-56 overflow-x-auto hide-scroll">
+                @foreach (var hora in Model.FlujoPorHoraHoy)
+                {
+                    var alturaPct = maxHora == 0 ? 0 : Math.Round(hora.CantidadEntradas * 100.0 / maxHora);
+                    <div class="flex flex-col items-center justify-end h-full gap-2 min-w-[32px]">
+                        <span class="font-label-sm font-bold text-on-surface">@hora.CantidadEntradas</span>
+                        <div class="w-6 rounded-t-lg bg-tertiary/80 hover:bg-tertiary transition-colors"
+                             style="height:@(Math.Max(alturaPct, 3))%"></div>
+                        <span class="font-label-sm text-on-surface-variant">@hora.Hora h</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Clientes frecuentes -->
+    <div class="lg:col-span-12 bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden">
+        <div class="px-gutter py-stack-md border-b border-surface-variant bg-surface">
+            <h3 class="text-headline-sm text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">leaderboard</span> Niños más frecuentes (@Model.DiasAnalizados días)
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left min-w-[600px]">
+                <thead>
+                    <tr class="border-b border-surface-variant/50 bg-surface-bright/50 font-label-sm uppercase tracking-wider text-on-surface-variant">
+                        <th class="px-gutter py-stack-md font-semibold pl-6">#</th>
+                        <th class="px-gutter py-stack-md font-semibold">Niño</th>
+                        <th class="px-gutter py-stack-md font-semibold">Familia</th>
+                        <th class="px-gutter py-stack-md font-semibold">Visitas</th>
+                        <th class="px-gutter py-stack-md font-semibold">Fidelidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.ClientesFrecuentes.Any())
+                    {
+                        <tr><td colspan="5" class="px-gutter py-gutter text-center text-outline">Sin visitas registradas en el periodo.</td></tr>
+                    }
+                    @{ var posicion = 1; }
+                    @foreach (var c in Model.ClientesFrecuentes)
+                    {
+                        <tr class="border-b border-surface-variant/30 last:border-0 hover:bg-surface-container-low transition-colors">
+                            <td class="px-gutter py-stack-md pl-6">
+                                <span class="w-8 h-8 rounded-full @(posicion <= 3 ? "bg-secondary-fixed text-on-secondary-fixed" : "bg-surface-variant/40 text-on-surface-variant") inline-flex items-center justify-center font-bold">@(posicion++)</span>
+                            </td>
+                            <td class="px-gutter py-stack-md">
+                                <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@c.ClienteId"
+                                   class="font-bold text-primary hover:text-surface-tint">@c.NombreCliente</a>
+                            </td>
+                            <td class="px-gutter py-stack-md text-on-surface-variant">@c.ApellidosFamilia</td>
+                            <td class="px-gutter py-stack-md font-bold">@c.TotalVisitas</td>
+                            <td class="px-gutter py-stack-md">
+                                <div class="flex items-center gap-0.5">
+                                    @for (var i = 1; i <= 8; i++)
+                                    {
+                                        <span class="material-symbols-outlined @(i <= c.ConteoChecks ? "text-secondary" : "text-outline-variant")" style="font-size:16px;">star</span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

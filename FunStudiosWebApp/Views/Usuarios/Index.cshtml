@@ -1,0 +1,106 @@
+@model List<UsuarioListItemViewModel>
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+    var resumen = (ResumenUsuariosViewModel)(ViewData["Resumen"] ?? new ResumenUsuariosViewModel());
+}
+
+<!-- Encabezado -->
+<div class="flex flex-col sm:flex-row justify-between sm:items-end gap-stack-md mb-stack-lg">
+    <div>
+        <h2 class="text-headline-lg text-on-background">Gestión de Usuarios</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">Administra los perfiles de acceso del personal.</p>
+    </div>
+    <a asp-controller="Usuarios" asp-action="Crear"
+       class="self-start flex items-center gap-2 px-6 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all shadow-soft">
+        <span class="material-symbols-outlined">add</span> Nuevo Usuario
+    </a>
+</div>
+
+<!-- Tarjetas resumen -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-gutter mb-gutter">
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Total usuarios</p>
+        <p class="text-headline-lg text-on-background font-bold">@resumen.TotalUsuarios</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Activos</p>
+        <p class="text-headline-lg text-tertiary font-bold">@resumen.Activos</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Administradores</p>
+        <p class="text-headline-lg text-secondary font-bold">@resumen.TotalAdministradores</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Recepción</p>
+        <p class="text-headline-lg text-primary font-bold">@resumen.TotalRecepcion</p>
+    </div>
+</div>
+
+<!-- Tabla del personal -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-surface-variant/30">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[720px]">
+            <thead>
+                <tr class="border-b-2 border-surface-variant/50 text-on-surface-variant font-label-sm uppercase tracking-wider">
+                    <th class="pb-4 pl-4 font-semibold">Usuario</th>
+                    <th class="pb-4 font-semibold">Rol</th>
+                    <th class="pb-4 font-semibold">Estado</th>
+                    <th class="pb-4 pr-4 font-semibold text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="text-body-md">
+                @foreach (var u in Model)
+                {
+                    <tr class="hover:bg-surface-container-low transition-colors border-b border-surface-variant/30 last:border-0">
+                        <!-- Avatar, nombre completo y usuario de acceso -->
+                        <td class="py-4 pl-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">@u.Iniciales</div>
+                                <div>
+                                    <p class="font-bold text-on-background">@u.NombreCompleto</p>
+                                    <p class="font-label-sm text-on-surface-variant">@@@u.NombreUsuario</p>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Rol -->
+                        <td class="py-4">
+                            @if (u.RolId == 1)
+                            {
+                                <span class="font-label-sm px-3 py-1 rounded-full bg-secondary-fixed-dim/30 text-secondary border border-secondary/20 flex items-center gap-1 w-fit">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">shield_person</span> Administrador
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="font-label-sm px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant border border-outline-variant/30 flex items-center gap-1 w-fit">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">point_of_sale</span> Recepción
+                                </span>
+                            }
+                        </td>
+
+                        <!-- Estado -->
+                        <td class="py-4">
+                            @if (u.Activo)
+                            {
+                                <span class="font-label-sm px-3 py-1 rounded-full bg-tertiary-container/10 text-tertiary border border-tertiary/20">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="font-label-sm px-3 py-1 rounded-full bg-error-container/50 text-on-error-container border border-error/20">Inactivo</span>
+                            }
+                        </td>
+
+                        <!-- Acciones -->
+                        <td class="py-4 pr-4 text-right">
+                            <a asp-controller="Usuarios" asp-action="Editar" asp-route-id="@u.UsuarioId"
+                               class="inline-flex p-2 text-[#b26a00] hover:bg-[#ffb300]/10 rounded-full transition-colors" title="Editar usuario">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

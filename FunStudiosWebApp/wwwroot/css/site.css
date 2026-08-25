@@ -1,0 +1,105 @@
+/* ===== FunStudios · Design System "Joyful Pulse" =====
+   Paleta y utilidades que complementan la config de Tailwind en _Layout.cshtml */
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Patrón de confetti sutil del fondo */
+.confetti-bg {
+    background-color: #f3faff;
+    background-image: radial-gradient(rgba(184, 0, 73, .10) 1px, transparent 1px),
+                      radial-gradient(rgba(0, 119, 206, .10) 1px, transparent 1px),
+                      radial-gradient(rgba(38, 134, 48, .10) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px, 10px 30px;
+    background-attachment: fixed;
+}
+
+/* Puntitos suaves para el dashboard */
+.dots-bg {
+    background-image: radial-gradient(#a2c9ff 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-attachment: fixed;
+}
+
+/* Sombras ambientales */
+.shadow-soft {
+    box-shadow: 0 8px 24px rgba(0, 94, 164, .05);
+}
+
+.shadow-high {
+    box-shadow: 0 12px 24px rgba(0, 94, 164, .1);
+}
+
+/* Botones táctiles con feedback de presión */
+.btn-press {
+    transition: transform .1s ease, box-shadow .1s ease;
+}
+
+.btn-press:active {
+    transform: translateY(2px);
+    box-shadow: none !important;
+}
+
+/* Anillo pulsante del escáner esperando huella */
+.pulse-ring {
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0%   { box-shadow: 0 0 0 0 rgba(38, 134, 48, .4); }
+    70%  { box-shadow: 0 0 0 14px rgba(38, 134, 48, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(38, 134, 48, 0); }
+}
+
+/* Anillo amarillo para captura biométrica en progreso */
+.pulse-ring-wait {
+    animation: pulse-yellow 2s infinite;
+}
+
+@keyframes pulse-yellow {
+    0%   { box-shadow: 0 0 0 0 rgba(255, 218, 106, .45); }
+    70%  { box-shadow: 0 0 0 15px rgba(255, 218, 106, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 218, 106, 0); }
+}
+
+/* Toast de notificaciones (TempData) */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100;
+    padding: 14px 22px;
+    border-radius: 1rem;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 12px 24px rgba(0, 94, 164, .18);
+    animation: toast-in .3s ease;
+}
+
+.toast-success { background-color: #268630; }
+.toast-error   { background-color: #ba1a1a; }
+
+@keyframes toast-in {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Barras horizontales de las gráficas BI */
+.bar-track {
+    background-color: #e6f6ff;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background-color: #0077ce;
+    transition: width .5s ease;
+}
+
+/* Ocultar scrollbar en listas largas */
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,0 +1,105 @@
+@model BitacoraViewModel
+@{
+    ViewData["Title"] = "Bitácora de Entradas";
+}
+
+<!-- Encabezado -->
+<div class="flex flex-col sm:flex-row justify-between sm:items-end gap-stack-md mb-stack-lg">
+    <div>
+        <h2 class="text-headline-lg text-on-background">Bitácora de Entradas</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">Registro histórico de accesos y salidas del parque.</p>
+    </div>
+    <div class="text-right">
+        <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Registros encontrados</p>
+        <p class="text-headline-md text-primary font-bold">@Model.Entradas.Count</p>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="bg-surface-container-lowest rounded-xl p-gutter shadow-soft mb-gutter">
+    <form method="get" asp-controller="Reportes" asp-action="Bitacora"
+          class="grid grid-cols-1 md:grid-cols-5 gap-gutter items-end">
+        <div class="flex flex-col gap-1">
+            <label for="fechaInicio" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Desde</label>
+            <input type="date" id="fechaInicio" name="fechaInicio" value="@Model.FechaInicio?.ToString("yyyy-MM-dd")"
+                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 h-[48px] focus:outline-none" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label for="fechaFin" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Hasta</label>
+            <input type="date" id="fechaFin" name="fechaFin" value="@Model.FechaFin?.ToString("yyyy-MM-dd")"
+                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 h-[48px] focus:outline-none" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label for="tipoAcceso" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Tipo de acceso</label>
+            <select id="tipoAcceso" name="tipoAcceso"
+                    class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 h-[48px] focus:outline-none">
+                <option value="">Todos</option>
+                @foreach (var t in Model.TiposAcceso)
+                {
+                    <option value="@t.TipoAccesoId" selected="@(Model.TipoAccesoId == t.TipoAccesoId)">@t.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="flex flex-col gap-1 md:col-span-1">
+            <label for="busqueda" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Buscar niño</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant">search</span>
+                <input type="text" id="busqueda" name="busqueda" value="@Model.BusquedaCliente" placeholder="Nombre..."
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none" />
+            </div>
+        </div>
+        <button type="submit"
+                class="h-[48px] flex items-center justify-center gap-2 bg-primary hover:bg-surface-tint text-on-primary font-label-lg rounded-full btn-press transition-all cursor-pointer">
+            <span class="material-symbols-outlined">filter_alt</span> Aplicar
+        </button>
+    </form>
+</div>
+
+<!-- Tabla de registros -->
+<div class="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left min-w-[900px]">
+            <thead>
+                <tr class="border-b border-surface-variant/50 bg-surface-bright/50 font-label-sm uppercase tracking-wider text-on-surface-variant">
+                    <th class="px-gutter py-stack-md font-semibold pl-6">Fecha y hora</th>
+                    <th class="px-gutter py-stack-md font-semibold">Niño</th>
+                    <th class="px-gutter py-stack-md font-semibold">Tipo de acceso</th>
+                    <th class="px-gutter py-stack-md font-semibold">Tutor responsable</th>
+                    <th class="px-gutter py-stack-md font-semibold">Salida</th>
+                    <th class="px-gutter py-stack-md font-semibold">Duración</th>
+                    <th class="px-gutter py-stack-md font-semibold text-right pr-6">Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Entradas.Any())
+                {
+                    <tr><td colspan="7" class="px-gutter py-gutter text-center text-outline">No hay registros para los filtros aplicados.</td></tr>
+                }
+                @foreach (var e in Model.Entradas)
+                {
+                    <tr class="border-b border-surface-variant/30 last:border-0 hover:bg-surface-container-low transition-colors">
+                        <td class="px-gutter py-stack-md pl-6 whitespace-nowrap">@e.FechaHoraEntrada.ToString("dd/MM/yyyy h:mm tt")</td>
+                        <td class="px-gutter py-stack-md">
+                            <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@e.ClienteId"
+                               class="font-bold text-primary hover:text-surface-tint">@e.NombreCliente @e.ApellidosFamilia</a>
+                        </td>
+                        <td class="px-gutter py-stack-md">@e.TipoAccesoNombre</td>
+                        <td class="px-gutter py-stack-md text-on-surface-variant">@(string.IsNullOrWhiteSpace(e.TutorOtro) ? "—" : e.TutorOtro)</td>
+                        <td class="px-gutter py-stack-md whitespace-nowrap">
+                            @if (e.EstaDentro)
+                            {
+                                <span class="font-label-sm px-3 py-1 rounded-full bg-tertiary-container/10 text-tertiary border border-tertiary/20">Dentro</span>
+                            }
+                            else
+                            {
+                                <span>@e.FechaHoraSalida!.Value.ToString("dd/MM/yyyy h:mm tt")</span>
+                            }
+                        </td>
+                        <td class="px-gutter py-stack-md text-on-surface-variant">@e.DuracionTexto</td>
+                        <td class="px-gutter py-stack-md text-right pr-6">@(e.MontoVenta?.ToString("C0") ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

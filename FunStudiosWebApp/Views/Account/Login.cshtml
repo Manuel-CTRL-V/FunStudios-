@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Entrar";
+}
+
+<div class="w-full max-w-md">
+    <div class="bg-surface-container-lowest rounded-xl shadow-high p-stack-lg flex flex-col items-center">
+
+        <!-- Logo -->
+        <div class="mb-stack-lg text-center">
+            <!-- TODO: reemplazar por el logo oficial cuando se entregue el asset -->
+            <div class="w-24 h-24 mx-auto mb-stack-sm rounded-full bg-gradient-to-br from-secondary-container to-primary-container flex items-center justify-center shadow-soft">
+                <span class="material-symbols-outlined text-white text-[48px]">toys</span>
+            </div>
+            <h1 class="text-headline-lg text-primary tracking-tight">FunStudios</h1>
+            <p class="text-body-md text-on-surface-variant mt-unit">Acceso de Recepcionista</p>
+        </div>
+
+        <!-- Formulario de login -->
+        <form asp-controller="Account" asp-action="Login" method="post"
+              asp-route-returnUrl="@ViewData["ReturnUrl"]"
+              class="w-full flex flex-col gap-stack-md">
+
+            <div asp-validation-summary="All" class="hidden"></div>
+
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="flex items-center gap-2 bg-error-container text-on-error-container font-label-lg px-gutter py-3 rounded-lg border border-error/30">
+                    <span class="material-symbols-outlined">error</span>
+                    @ViewData.ModelState[string.Empty]?.Errors.FirstOrDefault()?.ErrorMessage
+                </div>
+            }
+
+            <!-- Usuario -->
+            <div class="relative">
+                <label class="sr-only" for="nombreUsuario">Usuario</label>
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span class="material-symbols-outlined text-outline">person</span>
+                </div>
+                <input id="nombreUsuario" name="nombreUsuario"
+                       class="block w-full pl-12 pr-4 h-touch-target bg-surface-container-low border-2 border-transparent focus:border-primary focus:bg-surface-container-lowest focus:outline-none rounded-lg text-body-lg placeholder:text-outline-variant transition-colors"
+                       placeholder="Usuario" required autofocus />
+            </div>
+
+            <!-- Contraseña -->
+            <div class="relative">
+                <label class="sr-only" for="password">Contraseña</label>
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span class="material-symbols-outlined text-outline">lock</span>
+                </div>
+                <input id="password" name="password" type="password"
+                       class="block w-full pl-12 pr-4 h-touch-target bg-surface-container-low border-2 border-transparent focus:border-primary focus:bg-surface-container-lowest focus:outline-none rounded-lg text-body-lg placeholder:text-outline-variant transition-colors"
+                       placeholder="Contraseña" required />
+            </div>
+
+            <!-- Botón entrar -->
+            <button type="submit"
+                    class="mt-stack-sm w-full h-touch-target bg-primary text-on-primary text-headline-sm rounded-lg hover:bg-surface-tint btn-press shadow-sm transition-all duration-200 flex items-center justify-center gap-unit cursor-pointer">
+                <span>Entrar</span>
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </form>
+
+        <!-- Credenciales demo (solo mientras no exista SQL Server) -->
+        <div class="mt-stack-md w-full bg-surface-container-low rounded-lg px-gutter py-stack-md text-center">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Cuentas demo</p>
+            <p class="font-body-md text-body-md text-on-surface mt-1"><b>admin / admin123</b> · <b>recepcion / recepcion123</b></p>
+        </div>
+    </div>
+</div>

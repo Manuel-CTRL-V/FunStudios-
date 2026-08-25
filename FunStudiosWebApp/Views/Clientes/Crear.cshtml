@@ -1,0 +1,295 @@
+@model ClienteCrearViewModel
+@{
+    ViewData["Title"] = "Nuevo Enrolamiento";
+}
+
+<!-- Encabezado -->
+<div class="mb-stack-lg">
+    <h2 class="text-display-lg text-on-surface mb-2">Nuevo Enrolamiento</h2>
+    <p class="text-body-lg text-on-surface-variant">Registre un nuevo niño y vincule el acceso biométrico de la familia.</p>
+</div>
+
+<form asp-controller="Clientes" asp-action="Crear" method="post" id="form-enrolamiento">
+    @Html.AntiForgeryToken()
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+
+        <!-- ===== Columna izquierda: Captura Biométrica (RF3, RF4) ===== -->
+        <div class="lg:col-span-4 flex flex-col gap-gutter">
+            <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-secondary to-[#ffda6a]"></div>
+
+                <div class="flex items-center gap-2 mb-stack-md">
+                    <span class="material-symbols-outlined text-secondary">fingerprint</span>
+                    <h3 class="text-headline-sm text-on-surface">Captura Biométrica del Niño</h3>
+                </div>
+
+                <div class="flex flex-col items-center justify-center py-stack-md">
+                    <!-- Anillo de captura: clic = toma de muestra -->
+                    <button type="button" onclick="capturar('nino')" id="ring-nino"
+                            class="w-32 h-32 rounded-full border-4 border-[#ffda6a] flex items-center justify-center mb-6 pulse-ring-wait relative bg-surface-bright cursor-pointer btn-press"
+                            title="Tomar muestra de huella">
+                        <span id="icon-nino" class="material-symbols-outlined text-[64px] text-outline-variant">fingerprint</span>
+                    </button>
+
+                    <p class="font-label-lg text-on-surface text-center" id="estado-nino">Esperando huella digital</p>
+                    <p class="text-body-md text-on-surface-variant text-center">Haga clic en el círculo para capturar.</p>
+
+                    <!-- Barra de progreso 3 muestras -->
+                    <div class="flex justify-center gap-stack-sm mt-stack-md">
+                        @for (var i = 1; i <= 3; i++)
+                        {
+                            <div class="w-12 h-3 rounded-full bg-outline-variant/30 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 h-full w-0 bg-[#7ddc7a] transition-all duration-500" data-step="nino-@i"></div>
+                            </div>
+                        }
+                    </div>
+                    <p class="font-label-sm text-label-sm text-center text-on-surface-variant uppercase tracking-wider mt-stack-md">
+                        Se requieren 3 muestras
+                    </p>
+                </div>
+
+                <!-- Huella oculta que viaja con el formulario -->
+                <input type="hidden" asp-for="HuellaNinoTemplateBase64" />
+
+                <!-- Enrolamiento opcional del tutor (RF4) -->
+                <div class="mt-stack-md pt-stack-md border-t border-outline-variant/30">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" asp-for="ConHuellaTutor"
+                               onchange="toggleTutor()"
+                               class="peer sr-only" />
+                        <div class="w-6 h-6 rounded border-2 border-outline peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center group-hover:border-primary">
+                            <span class="material-symbols-outlined text-white text-[16px] opacity-0 peer-checked:opacity-100">check</span>
+                        </div>
+                        <span class="text-body-md text-on-surface">Niño &lt; 2 años (usar huella del Tutor)</span>
+                    </label>
+
+                    <!-- Captura del tutor -->
+                    <div id="tutor-section" class="hidden flex-col items-center mt-stack-md pt-stack-md border-t border-outline-variant/30 w-full">
+                        <div class="flex items-center gap-2 mb-stack-sm self-start">
+                            <span class="material-symbols-outlined text-primary">family_restroom</span>
+                            <h4 class="font-label-lg text-on-surface">Huella del Tutor (opcional)</h4>
+                        </div>
+                        <button type="button" onclick="capturar('tutor')" id="ring-tutor"
+                                class="w-24 h-24 rounded-full border-4 border-[#ffda6a] flex items-center justify-center pulse-ring-wait bg-surface-bright cursor-pointer btn-press"
+                                title="Tomar muestra del tutor">
+                            <span class="material-symbols-outlined text-[40px] text-outline-variant">fingerprint</span>
+                        </button>
+                        <div class="flex justify-center gap-2 mt-stack-sm">
+                            @for (var i = 1; i <= 3; i++)
+                            {
+                                <div class="w-10 h-2.5 rounded-full bg-outline-variant/30 relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 h-full w-0 bg-[#7ddc7a] transition-all duration-500" data-step="tutor-@i"></div>
+                                </div>
+                            }
+                        </div>
+                        <p id="estado-tutor" class="font-label-sm text-on-surface-variant mt-stack-sm">Sin muestras</p>
+                        <input type="hidden" asp-for="HuellaTutorTemplateBase64" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Columna derecha: Formularios ===== -->
+        <div class="lg:col-span-8 flex flex-col gap-gutter">
+
+            <!-- 1. Info del niño (RF1) -->
+            <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft">
+                <div class="flex items-center gap-2 mb-stack-md">
+                    <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-primary-container text-sm">face</span>
+                    </div>
+                    <h3 class="text-headline-sm text-on-surface">1. Info del Niño</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                    <div class="flex flex-col gap-1">
+                        <label asp-for="Nombre" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Niño</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">smart_toy</span>
+                            <input asp-for="Nombre" placeholder="ej. Leo"
+                                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                        </div>
+                        <span asp-validation-for="Nombre" class="font-label-sm text-error ml-4"></span>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label asp-for="FechaNacimiento" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Fecha de Nacimiento</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">cake</span>
+                            <input asp-for="FechaNacimiento" type="date" max="@DateTime.Now.ToString("yyyy-MM-dd")"
+                                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all" />
+                        </div>
+                        <span asp-validation-for="FechaNacimiento" class="font-label-sm text-error ml-4"></span>
+                    </div>
+
+                    <div class="flex flex-col gap-1 md:col-span-2">
+                        <label asp-for="NotasMedicas" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Notas médicas (opcional)</label>
+                        <textarea asp-for="NotasMedicas" rows="2" placeholder="Alergias, condiciones especiales..."
+                                  class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-[1rem] py-3 px-4 focus:outline-none transition-all placeholder:text-outline-variant"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Info de la familia (RF2) -->
+            <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft">
+                <div class="flex items-center gap-2 mb-stack-md">
+                    <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-primary-container text-sm">family_restroom</span>
+                    </div>
+                    <h3 class="text-headline-sm text-on-surface">2. Info de la Familia</h3>
+                </div>
+
+                <!-- Modo: nueva o existente (RF2) -->
+                <div class="flex flex-wrap gap-stack-md mb-gutter">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" asp-for="UsarFamiliaExistente" value="false"
+                               onchange="toggleModoFamilia()" class="accent-[#0077ce]" />
+                        <span class="font-label-lg text-on-surface">Familia nueva</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" asp-for="UsarFamiliaExistente" value="true"
+                               onchange="toggleModoFamilia()" class="accent-[#0077ce]" />
+                        <span class="font-label-lg text-on-surface">Familia ya registrada</span>
+                    </label>
+                </div>
+
+                <!-- Familia existente -->
+                <div id="familia-existente-section" class="hidden mb-gutter">
+                    <div class="flex flex-col gap-1 md:w-1/2">
+                        <label asp-for="FamiliaExistenteId" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Seleccione la familia</label>
+                        <select asp-for="FamiliaExistenteId" class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 h-[48px] focus:outline-none">
+                            <option value="" disabled selected>— Familias —</option>
+                            @foreach (var f in Model.FamiliasExistentes)
+                            {
+                                <option value="@f.FamiliaId">@f.Etiqueta</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Familia nueva -->
+                <div id="familia-nueva-section" class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                    <div class="flex flex-col gap-1 md:col-span-2">
+                        <label asp-for="ApellidosFamilia" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Apellidos de la Familia</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">badge</span>
+                            <input asp-for="ApellidosFamilia" placeholder="ej. Pérez-García"
+                                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label asp-for="TelefonoTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 1</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">phone_iphone</span>
+                            <input asp-for="TelefonoTutor1" placeholder="(555) 000-0000"
+                                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label asp-for="TelefonoTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 2 (Opcional)</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant">phone_iphone</span>
+                            <input asp-for="TelefonoTutor2" placeholder="(555) 000-0000"
+                                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de errores del servidor -->
+            <div asp-validation-summary="All" class="text-error font-label-md"></div>
+
+            <!-- Botón final -->
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="bg-primary hover:bg-surface-tint text-on-primary font-headline-sm px-8 rounded-full shadow-high btn-press transition-all duration-200 flex items-center gap-2 h-[64px] cursor-pointer">
+                    <span class="material-symbols-outlined">verified</span>
+                    Registrar y Validar Acceso
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    const TOKEN = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+    // ================= Enrolamiento simulado (RF3): 3 muestras =================
+
+    async function capturar(quien) {
+        if (quien === 'tutor' && document.getElementById('tutor-section').classList.contains('hidden')) return;
+
+        const ring = document.getElementById(`ring-${quien}`);
+        ring.disabled = true;
+        ring.classList.remove('pulse-ring-wait');
+        ring.style.borderColor = '#0077ce';
+
+        try {
+            const resp = await fetch('/Clientes/CapturarMuestra', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': TOKEN }
+            });
+            const data = await resp.json();
+
+            // Avanza al siguiente paso sin completar
+            for (let i = 1; i <= 3; i++) {
+                const bar = document.querySelector(`[data-step="${quien}-${i}"]`);
+                if (bar.style.width !== '100%') { bar.style.width = '100%'; break; }
+            }
+
+            const completadas = [...document.querySelectorAll(`[data-step^="${quien}-"]`)]
+                .filter(b => b.style.width === '100%').length;
+
+            if (quien === 'nino') {
+                document.getElementById('estado-nino').textContent = `Muestras tomadas: ${completadas}/3`;
+                document.getElementById('HuellaNinoTemplateBase64').value = completadas >= 3 ? data.muestraBase64 : '';
+            } else {
+                document.getElementById('estado-tutor').textContent = `Muestras del tutor: ${completadas}/3`;
+                document.getElementById('HuellaTutorTemplateBase64').value = completadas >= 3 ? data.muestraBase64 : '';
+            }
+
+            if (completadas >= 3) {
+                ring.style.borderColor = '#268630';
+                ring.style.backgroundColor = '#e6f6ff';
+                ring.querySelector('.material-symbols-outlined').style.color = '#268630';
+                ring.querySelector('.material-symbols-outlined').textContent = 'check_circle';
+            }
+        } catch {
+            toast('Error al comunicarse con el lector biométrico.', true);
+        } finally {
+            ring.disabled = false;
+            if (![...document.querySelectorAll(`[data-step^="${quien}-"]`)]
+                .every(b => b.style.width === '100%')) {
+                ring.classList.add('pulse-ring-wait');
+                ring.style.borderColor = '#ffda6a';
+            }
+        }
+    }
+
+    function toggleTutor() {
+        const seccion = document.getElementById('tutor-section');
+        seccion.classList.toggle('hidden');
+        seccion.classList.toggle('flex');
+    }
+
+    function toggleModoFamilia() {
+        const usarExistente = document.querySelector('input[name="UsarFamiliaExistente"]:checked').value === 'true';
+        const nueva = document.getElementById('familia-nueva-section');
+        const existente = document.getElementById('familia-existente-section');
+
+        nueva.classList.toggle('hidden', usarExistente);
+        existente.classList.toggle('hidden', !usarExistente);
+
+        // Al usar familia existente, los campos nuevos no son requeridos
+        nueva.querySelectorAll('input[type="text"], input[type="tel"]').forEach(i =>
+            i.required = !usarExistente && i.id !== 'TelefonoTutor2');
+        document.getElementById('FamiliaExistenteId').required = usarExistente;
+    }
+
+    toggleModoFamilia();
+</script>
+}

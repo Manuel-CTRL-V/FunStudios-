@@ -1,0 +1,74 @@
+@model LogsBiometricoViewModel
+@{
+    ViewData["Title"] = "Logs Biométricos";
+
+    string ClaseGravedad(string? gravedad) => gravedad switch
+    {
+        "Error" => "bg-error-container/50 text-on-error-container border border-error/20",
+        "Advertencia" => "bg-[#ffb300]/15 text-[#b26a00] border border-[#ffb300]/30",
+        _ => "bg-surface-container-high text-on-surface-variant border border-outline-variant/30"
+    };
+}
+
+<!-- Encabezado -->
+<div class="mb-stack-lg">
+    <h2 class="text-headline-lg text-on-background">Logs Biométricos</h2>
+    <p class="text-body-md text-on-surface-variant mt-1">Auditoría técnica del lector de huellas (RF14).</p>
+</div>
+
+<!-- Filtro por gravedad -->
+<div class="flex flex-wrap gap-stack-md mb-gutter">
+    @foreach (var opcion in new[] { (string?)"", "Info", "Advertencia", "Error" })
+    {
+        <a asp-controller="Reportes" asp-action="LogsBiometrico" asp-route-gravedad="@opcion"
+           class="px-gutter py-2 rounded-full font-label-lg border transition-colors
+                  @(Model.GravedadFiltro == opcion
+                      ? "bg-primary text-on-primary border-primary shadow-soft"
+                      : "bg-surface-container-lowest text-primary border-surface-variant hover:bg-surface-container-high")">
+            @(string.IsNullOrEmpty(opcion) ? "Todos" : opcion)
+        </a>
+    }
+</div>
+
+<!-- Tabla de eventos -->
+<div class="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left min-w-[900px]">
+            <thead>
+                <tr class="border-b border-surface-variant/50 bg-surface-bright/50 font-label-sm uppercase tracking-wider text-on-surface-variant">
+                    <th class="px-gutter py-stack-md font-semibold pl-6">Fecha / Hora</th>
+                    <th class="px-gutter py-stack-md font-semibold">Operación</th>
+                    <th class="px-gutter py-stack-md font-semibold">Detalle</th>
+                    <th class="px-gutter py-stack-md font-semibold">Estación</th>
+                    <th class="px-gutter py-stack-md font-semibold">Usuario</th>
+                    <th class="px-gutter py-stack-md font-semibold pr-6">Gravedad</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Logs.Any())
+                {
+                    <tr><td colspan="6" class="px-gutter py-gutter text-center text-outline">No hay eventos registrados con este filtro.</td></tr>
+                }
+                @foreach (var log in Model.Logs)
+                {
+                    <tr class="border-b border-surface-variant/30 last:border-0 hover:bg-surface-container-low transition-colors">
+                        <td class="px-gutter py-stack-md pl-6 whitespace-nowrap">@log.FechaHoraEvento.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td class="px-gutter py-stack-md">@log.Operacion</td>
+                        <td class="px-gutter py-stack-md max-w-[360px]">
+                            @log.MensajeDetalle
+                            @if (!string.IsNullOrWhiteSpace(log.ClienteNombre))
+                            {
+                                <span class="font-label-sm text-primary ml-1">(@log.ClienteNombre)</span>
+                            }
+                        </td>
+                        <td class="px-gutter py-stack-md text-on-surface-variant">@log.IPEstacionTrabajo</td>
+                        <td class="px-gutter py-stack-md text-on-surface-variant">@(log.UsuarioNombre ?? "Sistema")</td>
+                        <td class="px-gutter py-stack-md pr-6">
+                            <span class="font-label-sm px-3 py-1 rounded-full whitespace-nowrap @ClaseGravedad(log.Gravedad)">@(log.Gravedad ?? "Info")</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "yj5kJtTngDo=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\pc\\Desktop\\Proyecto FunStudios\\FunStudios\\FunStudiosWebApp\\FunStudiosWebApp\\FunStudiosWebApp.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\pc\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.5\\microsoft.entityframeworkcore.10.0.5.nupkg.sha512",
+    "C:\\Users\\pc\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\10.0.5\\microsoft.entityframeworkcore.abstractions.10.0.5.nupkg.sha512",
+    "C:\\Users\\pc\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\10.0.5\\microsoft.entityframeworkcore.analyzers.10.0.5.nupkg.sha512",
+    "C:\\Users\\pc\\.nuget\\packages\\microsoft.entityframeworkcore.inmemory\\10.0.5\\microsoft.entityframeworkcore.inmemory.10.0.5.nupkg.sha512"
+  ],
+  "logs": []
+}

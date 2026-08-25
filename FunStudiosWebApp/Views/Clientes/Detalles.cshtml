@@ -1,0 +1,229 @@
+@model ClienteDetalleViewModel
+@{
+    ViewData["Title"] = $"{Model.Nombre} · Detalles";
+}
+
+<!-- Encabezado del perfil -->
+<div class="flex flex-col sm:flex-row justify-between sm:items-center gap-stack-md mb-stack-lg">
+    <div class="flex items-center gap-stack-md">
+        <div class="w-16 h-16 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-black text-headline-md">@Model.Inicial</div>
+        <div>
+            <h2 class="text-headline-lg text-on-background leading-tight">@Model.Nombre</h2>
+            <p class="text-body-md text-on-surface-variant">Familia @Model.ApellidosFamilia · @Model.Edad años · Nacido el @Model.FechaNacimiento.ToString("dd/MM/yyyy")</p>
+        </div>
+        <span class="ml-stack-sm font-label-sm px-3 py-1 rounded-full border @(Model.EstaDentro ? "bg-tertiary-container/10 text-tertiary border-tertiary/20" : "bg-surface-variant/50 text-on-surface-variant border-outline-variant/30")">
+            @(Model.EstaDentro ? "Dentro del parque" : "Fuera")
+        </span>
+    </div>
+
+    <a asp-controller="Clientes" asp-action="Editar" asp-route-id="@Model.ClienteId"
+       class="self-start flex items-center gap-2 px-6 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all shadow-soft">
+        <span class="material-symbols-outlined">edit</span> Editar datos
+    </a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.NotasMedicas))
+{
+    <div class="mb-gutter flex items-start gap-2 bg-surface-container-high border-l-8 border-[#ffb300] px-gutter py-stack-md rounded-lg">
+        <span class="material-symbols-outlined text-[#b26a00]">medical_information</span>
+        <div>
+            <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Nota médica</p>
+            <p class="font-label-lg text-on-surface">@Model.NotasMedicas</p>
+        </div>
+    </div>
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+
+    <!-- ===== Columna izquierda: fidelidad + familia ===== -->
+    <div class="lg:col-span-4 flex flex-col gap-gutter">
+
+        <!-- Fidelidad (RF8, RF10) -->
+        <div class="bg-surface-container-lowest rounded-xl p-gutter shadow-soft border-t-8" style="border-top-color:#e2165f;">
+            <h3 class="text-headline-sm text-on-surface mb-stack-md flex items-center gap-2">
+                <span class="material-symbols-outlined text-secondary-container">stars</span> Progreso de Fidelidad
+            </h3>
+            <div class="flex flex-wrap gap-0.5 mb-stack-md">
+                @for (var i = 1; i <= 8; i++)
+                {
+                    <span class="material-symbols-outlined @(i <= Model.ConteoChecks ? "text-secondary" : "text-outline-variant")">star</span>
+                }
+            </div>
+            <p class="font-label-lg text-on-surface">@Model.ConteoChecks de 8 checks</p>
+            <p class="font-label-sm text-on-surface-variant">
+                @if (Model.ConteoChecks == 0 && Model.EntradasGratisDisponibles == 0)
+                {
+                    <text>Ciclo iniciado. Cada visita Day Pass suma 1 check.</text>
+                }
+                else if (Model.ConteoChecks > 0)
+                {
+                    <text>Faltan @Math.Max(0, 8 - Model.ConteoChecks) visita(s) para ganar una entrada gratis.</text>
+                }
+                else
+                {
+                    <text>Ciclo reiniciado tras canjear su premio.</text>
+                }
+            </p>
+
+            @if (Model.EntradasGratisDisponibles > 0)
+            {
+                <div class="mt-stack-md bg-secondary-fixed-dim/20 rounded-lg p-stack-md flex items-center gap-2">
+                    <span class="material-symbols-outlined text-secondary">redeem</span>
+                    <span class="font-label-lg text-secondary">@Model.EntradasGratisDisponibles entrada(s) gratis disponible(s)</span>
+                </div>
+            }
+        </div>
+
+        <!-- Familia (RF2) -->
+        <div class="bg-surface-container-lowest rounded-xl p-gutter shadow-soft border-t-8" style="border-top-color:#0077ce;">
+            <h3 class="text-headline-sm text-on-surface mb-stack-md flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary-container">family_restroom</span> Datos de la Familia
+            </h3>
+            <ul class="flex flex-col gap-stack-sm text-body-md">
+                <li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">badge</span> Familia @Model.ApellidosFamilia</li>
+                <li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">phone_iphone</span> Tutor 1: @Model.TelefonoTutor1</li>
+                @if (!string.IsNullOrWhiteSpace(Model.TelefonoTutor2))
+                {
+                    <li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">phone_iphone</span> Tutor 2: @Model.TelefonoTutor2</li>
+                }
+                <li class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[18px]">fingerprint</span>
+                    Huella niño: @(Model.HuellaEnrolada ? "enrolada ✓" : "sin enrolar")
+                    @if (Model.HuellaTutorEnrolada)
+                    {
+                        <text>· Huella tutor: enrolada ✓</text>
+                    }
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== Columna derecha: historiales ===== -->
+    <div class="lg:col-span-8 flex flex-col gap-gutter">
+
+        <!-- Entradas recientes (RF12) -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden">
+            <div class="px-gutter py-stack-md border-b border-surface-variant bg-surface flex justify-between items-center">
+                <h3 class="text-headline-sm text-on-surface">Entradas Recientes</h3>
+                <a asp-controller="Reportes" asp-action="Bitacora" asp-route-busqueda="@Model.Nombre"
+                   class="font-label-lg text-primary hover:text-surface-tint text-label-lg flex items-center gap-unit">
+                    Ver bitácora completa <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[560px]">
+                    <thead>
+                        <tr class="border-b border-surface-variant/50 bg-surface-bright/50 font-label-sm uppercase tracking-wider text-on-surface-variant">
+                            <th class="px-gutter py-stack-md font-semibold">Entrada</th>
+                            <th class="px-gutter py-stack-md font-semibold">Salida</th>
+                            <th class="px-gutter py-stack-md font-semibold">Tipo</th>
+                            <th class="px-gutter py-stack-md font-semibold">Duración</th>
+                            <th class="px-gutter py-stack-md font-semibold text-right">Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.EntradasRecientes.Any())
+                        {
+                            <tr><td colspan="5" class="px-gutter py-gutter text-center text-outline">Sin visitas registradas todavía.</td></tr>
+                        }
+                        @foreach (var e in Model.EntradasRecientes)
+                        {
+                            <tr class="border-b border-surface-variant/30 last:border-0 hover:bg-surface-container-low">
+                                <td class="px-gutter py-stack-md">@e.FechaHoraEntrada.ToString("dd/MM/yy h:mm tt")</td>
+                                <td class="px-gutter py-stack-md">
+                                    @if (e.FechaHoraSalida.HasValue)
+                                    {
+                                        @e.FechaHoraSalida.Value.ToString("dd/MM/yy h:mm tt")
+                                    }
+                                    else
+                                    {
+                                        <span class="font-label-sm text-tertiary font-bold">Dentro</span>
+                                    }
+                                </td>
+                                <td class="px-gutter py-stack-md">@e.TipoAccesoNombre</td>
+                                <td class="px-gutter py-stack-md text-on-surface-variant">@e.DuracionTexto</td>
+                                <td class="px-gutter py-stack-md text-right">@(e.MontoVenta?.ToString("C0") ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Membresías -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden">
+            <div class="px-gutter py-stack-md border-b border-surface-variant bg-surface">
+                <h3 class="text-headline-sm text-on-surface">Membresías</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[560px]">
+                    <thead>
+                        <tr class="border-b border-surface-variant/50 bg-surface-bright/50 font-label-sm uppercase tracking-wider text-on-surface-variant">
+                            <th class="px-gutter py-stack-md font-semibold">Nombre</th>
+                            <th class="px-gutter py-stack-md font-semibold">Vigencia</th>
+                            <th class="px-gutter py-stack-md font-semibold">Precio</th>
+                            <th class="px-gutter py-stack-md font-semibold">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Membresias.Any())
+                        {
+                            <tr><td colspan="4" class="px-gutter py-gutter text-center text-outline">Sin membresías registradas.</td></tr>
+                        }
+                        @foreach (var m in Model.Membresias)
+                        {
+                            <tr class="border-b border-surface-variant/30 last:border-0 hover:bg-surface-container-low">
+                                <td class="px-gutter py-stack-md font-bold">@m.NombreMembresia</td>
+                                <td class="px-gutter py-stack-md text-on-surface-variant">@m.FechaInicio.ToString("dd/MM/yyyy") – @m.FechaFin.ToString("dd/MM/yyyy")</td>
+                                <td class="px-gutter py-stack-md">@m.Precio.ToString("C0")</td>
+                                <td class="px-gutter py-stack-md">
+                                    <span class="font-label-sm px-3 py-1 rounded-full border @(m.Vigente ? "bg-tertiary-container/10 text-tertiary border-tertiary/20" : m.Estado == "Vencida" || m.Estado == "Cancelada" ? "bg-error-container/50 text-on-error-container border-error/20" : "bg-surface-variant/50 text-on-surface-variant border-outline-variant/30")">
+                                        @m.Estado@(m.Vigente ? " · vigente" : "")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Ventas recientes -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-soft overflow-hidden">
+            <div class="px-gutter py-stack-md border-b border-surface-variant bg-surface flex justify-between items-center">
+                <h3 class="text-headline-sm text-on-surface">Compras Recientes</h3>
+                <a asp-controller="Reportes" asp-action="Ventas"
+                   class="font-label-lg text-primary hover:text-surface-tint text-label-lg flex items-center gap-unit">
+                    Historial de ventas <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[560px]">
+                    <thead>
+                        <tr class="border-b border-surface-variant/50 bg-surface-bright/50 font-label-sm uppercase tracking-wider text-on-surface-variant">
+                            <th class="px-gutter py-stack-md font-semibold">Fecha</th>
+                            <th class="px-gutter py-stack-md font-semibold">Concepto</th>
+                            <th class="px-gutter py-stack-md font-semibold">Método</th>
+                            <th class="px-gutter py-stack-md font-semibold text-right">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.VentasRecientes.Any())
+                        {
+                            <tr><td colspan="4" class="px-gutter py-gutter text-center text-outline">Sin compras registradas.</td></tr>
+                        }
+                        @foreach (var v in Model.VentasRecientes)
+                        {
+                            <tr class="border-b border-surface-variant/30 last:border-0 hover:bg-surface-container-low">
+                                <td class="px-gutter py-stack-md">@v.FechaVenta.ToString("dd/MM/yy h:mm tt")</td>
+                                <td class="px-gutter py-stack-md">@v.Descripcion</td>
+                                <td class="px-gutter py-stack-md text-on-surface-variant">@v.MetodoPagoNombre</td>
+                                <td class="px-gutter py-stack-md text-right font-bold">@v.Monto.ToString("C2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
