@@ -268,7 +268,12 @@ public class ReporteService : IReporteService
             .Where(eh => eh.FechaHoraEntrada >= hoy && eh.FechaHoraEntrada < hoy.AddDays(1))
             .ToListAsync();
 
-        var flujoPorHora = Enumerable.Range(8, 14).Select(hora => new FlujoHoraViewModel
+        // FunStudios: L-V 3:00PM-8:00PM | S-D y feriados 10:00AM-9:00PM
+        var esFinDeSemana = hoy.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+        var horaInicio = esFinDeSemana ? 10 : 15;
+        var horasTotales = esFinDeSemana ? 11 : 6;
+
+        var flujoPorHora = Enumerable.Range(horaInicio, horasTotales).Select(hora => new FlujoHoraViewModel
         {
             Hora = hora,
             CantidadEntradas = horasHoy.Count(eh => eh.FechaHoraEntrada.Hour == hora)

@@ -205,18 +205,11 @@ else
             <header class="flex justify-between items-center w-full px-container-margin py-stack-md sticky top-0 bg-surface/90 backdrop-blur z-30">
                 <h1 class="text-headline-md font-extrabold text-primary">FunStudios</h1>
 
-                <form asp-controller="Clientes" asp-action="Index" method="get" class="flex items-center gap-stack-md">
-                    <div class="relative hidden sm:block">
-                        <span class="material-symbols-outlined absolute left-stack-sm top-1/2 -translate-y-1/2 text-outline pointer-events-none">search</span>
-                        <input name="busqueda" value="@ViewData["Busqueda"]"
-                               class="pl-10 pr-4 py-2 bg-surface-container-high border-2 border-transparent focus:border-primary rounded-full w-64 focus:outline-none placeholder:text-outline-variant"
-                               placeholder="Buscar familias o niños..." />
-                    </div>
-
+                <div class="flex items-center gap-stack-md">
                     <div class="w-10 h-10 rounded-full border-2 border-primary-container bg-primary-container text-on-primary-container flex items-center justify-center font-bold" title="@User.Identity.Name">
                         @iniciales
                     </div>
-                </form>
+                </div>
             </header>
 
             <div class="p-container-margin pt-stack-md pb-container-margin max-w-[1400px] mx-auto">

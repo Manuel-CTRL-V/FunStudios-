@@ -226,10 +226,16 @@ public static class FunStudiosSeeder
             // Entre 2 y 5 day passes vendidos por día histórico
             var pasesDelDia = 2 + (fechaDia.DayOfYear + diasAtras) % 4;
 
+            // Horario: L-V 15:00-20:00 | S-D 10:00-21:00
+            var esFinDeSemanaHistorico = fechaDia.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+            var horaApertura = esFinDeSemanaHistorico ? 10 : 15;
+            var horasDisponibles = esFinDeSemanaHistorico ? 11 : 6;
+
             for (var i = 0; i < pasesDelDia; i++)
             {
                 var clienteId = new[] { 101, 201, 202, 301, 401, 501, 502 }[(diasAtras * 3 + i) % 7];
-                var horaVenta = fechaDia.AddHours(10 + (i * 90) / 60).AddMinutes((i * 30) % 60);
+                var horaBase = horaApertura + (i * horasDisponibles) / pasesDelDia;
+                var horaVenta = fechaDia.AddHours(horaBase).AddMinutes((i * 15) % 60);
 
                 var venta = new Venta
                 {
@@ -247,12 +253,13 @@ public static class FunStudiosSeeder
             if (diasAtras % 5 == 0)
             {
                 var familiaGratis = diasAtras % 2 == 0 ? 5 : 2;
+                var horaGratis = esFinDeSemanaHistorico ? fechaDia.AddHours(12) : fechaDia.AddHours(16);
                 context.EntradasHistorial.Add(new EntradaHistorial
                 {
                     FamiliaId = familiaGratis,
                     ClienteId = diasAtras % 2 == 0 ? 501 : 201,
-                    FechaHoraEntrada = fechaDia.AddHours(11),
-                    FechaHoraSalida = fechaDia.AddHours(15),
+                    FechaHoraEntrada = horaGratis,
+                    FechaHoraSalida = horaGratis.AddHours(4),
                     TipoAccesoId = TipoAcceso.FidelidadGratis,
                     TutorNombre = tutorPorFamilia[familiaGratis].nombre,
                     TutorTelefono = tutorPorFamilia[familiaGratis].telefono
@@ -260,7 +267,7 @@ public static class FunStudiosSeeder
             }
 
             await context.SaveChangesAsync();
-            foreach (var venta in ventasHistoricas.Where(v => v.VentaId == 0))
+            foreach (var venta in ventasHistoricas)
             {
                 var famId = context.Clientes.Local.First(c => c.ClienteId == venta.ClienteId).FamiliaId;
                 context.EntradasHistorial.Add(new EntradaHistorial
@@ -336,12 +343,14 @@ public static class FunStudiosSeeder
         }
 
         // Salida registrada esta mañana (control de presencia RF7)
+        var esFinDeSemanaHoy = hoy.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+        var horaSebastian = esFinDeSemanaHoy ? hoy.AddHours(10).AddMinutes(30) : hoy.AddHours(15).AddMinutes(30);
         context.EntradasHistorial.Add(new EntradaHistorial
         {
             FamiliaId = 5,
             ClienteId = 502,
-            FechaHoraEntrada = hoy.AddHours(9).AddMinutes(30),
-            FechaHoraSalida = DateTime.Now.AddHours(-1),
+            FechaHoraEntrada = horaSebastian,
+            FechaHoraSalida = horaSebastian.AddHours(4),
             TipoAccesoId = TipoAcceso.DayPass,
             TutorNombre = "Abuela Rosa",
             TutorTelefono = "809-555-1234"
