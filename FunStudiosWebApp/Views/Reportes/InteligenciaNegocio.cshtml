@@ -35,7 +35,6 @@
     <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft border-l-8" style="border-left-color:#e2165f;">
         <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Day Passes cobrados</p>
         <p class="text-display-sm text-secondary font-bold">@Model.Resumen.TotalDayPasses</p>
-        <p class="font-label-sm text-outline">@Model.Resumen.TotalIngresos.ToString("C0") ingresados</p>
     </div>
     <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft border-l-8" style="border-left-color:#268630;">
         <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Promedio diario</p>
@@ -45,7 +44,7 @@
     <div class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-soft border-l-8" style="border-left-color:#ffb300;">
         <p class="font-label-sm uppercase tracking-wider text-on-surface-variant">Gratis canjeadas</p>
         <p class="text-display-sm text-[#b26a00] font-bold">@Model.Resumen.TotalGratisCanjeadas</p>
-        <p class="font-label-sm text-outline">premios entregados (RF10)</p>
+        <p class="font-label-sm text-outline">premios entregados</p>
     </div>
 </div>
 
@@ -120,7 +119,7 @@
                         <span class="font-label-sm font-bold text-on-surface">@hora.CantidadEntradas</span>
                         <div class="w-6 rounded-t-lg bg-tertiary/80 hover:bg-tertiary transition-colors"
                              style="height:@(Math.Max(alturaPct, 3))%"></div>
-                        <span class="font-label-sm text-on-surface-variant">@hora.Hora h</span>
+                        <span class="font-label-sm text-on-surface-variant">@(hora.Hora == 0 ? "12 AM" : hora.Hora < 12 ? $"{hora.Hora} AM" : hora.Hora == 12 ? "12 PM" : $"{hora.Hora - 12} PM")</span>
                     </div>
                 }
             </div>

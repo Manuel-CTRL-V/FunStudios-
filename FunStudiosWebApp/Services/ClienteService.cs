@@ -48,7 +48,7 @@ public class ClienteService : IClienteService
             .Where(eh => clienteIds.Contains(eh.ClienteId))
             .GroupBy(eh => eh.ClienteId)
             .Select(g => new { ClienteId = g.Key, Ultima = g.Max(eh => eh.FechaHoraEntrada) })
-            .ToDictionaryAsync(x => x.ClienteId, x => x.Ultima);
+            .ToDictionaryAsync(x => x.ClienteId, x => (DateTime?)x.Ultima);
 
         return clientes.Select(c =>
         {

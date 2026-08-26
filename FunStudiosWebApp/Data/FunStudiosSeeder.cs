@@ -90,7 +90,7 @@ public static class FunStudiosSeeder
             new()
             {
                 FamiliaId = 1, ApellidosFamilia = "Pérez-García",
-                NombreTutor1 = "Laura Ortega",   TelefonoTutor1 = "555-0101",
+                NombreTutor1 = "Laura García",    TelefonoTutor1 = "555-0101",
                 NombreTutor2 = "Carlos Pérez",   TelefonoTutor2 = "555-0102"
             },
             new()
@@ -125,7 +125,7 @@ public static class FunStudiosSeeder
         // Tutor principal de cada familia para asignar en las entradas históricas
         var tutorPorFamilia = new Dictionary<int, (string nombre, string? telefono)>
         {
-            [1] = ("Laura Ortega",     "555-0101"),
+            [1] = ("Laura García",      "555-0101"),
             [2] = ("María Rodríguez",  "555-0203"),
             [3] = ("Ana López",        "555-0304"),
             [4] = ("Soo-Yeon Kim",     "555-0406"),
@@ -211,7 +211,7 @@ public static class FunStudiosSeeder
 
         var tutorPorFamilia = new Dictionary<int, (string nombre, string? telefono)>
         {
-            [1] = ("Laura Ortega",     "555-0101"),
+            [1] = ("Laura García",      "555-0101"),
             [2] = ("María Rodríguez",  "555-0203"),
             [3] = ("Ana López",        "555-0304"),
             [4] = ("Soo-Yeon Kim",     "555-0406"),
@@ -235,7 +235,7 @@ public static class FunStudiosSeeder
                 {
                     ClienteId = clienteId,
                     MetodoPagoId = ((diasAtras + i) % 3) + 1,
-                    Monto = 250.00m,
+                    Monto = 400.00m,
                     Descripcion = "Day Pass",
                     FechaVenta = horaVenta
                 };
@@ -323,7 +323,7 @@ public static class FunStudiosSeeder
                 {
                     ClienteId = clienteId,
                     MetodoPagoId = (clienteId % 3) + 1,
-                    Monto = 250.00m,
+                    Monto = 400.00m,
                     Descripcion = "Day Pass",
                     FechaVenta = horaEntrada
                 };

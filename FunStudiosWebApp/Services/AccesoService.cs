@@ -17,7 +17,7 @@ public class AccesoService : IAccesoService
     private readonly IBiometriaService _biometria;
 
     /// <summary>Precio de referencia del Day Pass mientras no exista módulo de precios.</summary>
-    public const decimal PrecioDayPass = 250.00m;
+    public const decimal PrecioDayPass = 400.00m;
 
     public AccesoService(FunStudiosContext context, IBiometriaService biometria)
     {
