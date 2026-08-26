@@ -48,7 +48,6 @@ public class AccesoService : IAccesoService
             return resultado;
         }
 
-        // ---------- Captura simulada ----------
         // Sin hardware, la "captura" toma el template del niño que se quiere simular,
         // o uno aleatorio (alguien puso el dedo en el lector).
         byte[] muestraCapturada;
@@ -333,7 +332,7 @@ public class AccesoService : IAccesoService
 
         _context.EntradasHistorial.Add(entrada);
 
-        // ---------- Fidelidad (RF8, RF9, RF10): solo Day Pass acumula checks ----------
+        // Fidelidad (RF8, RF9, RF10): solo Day Pass acumula checks
         if (solicitud.TipoAccesoId == TipoAcceso.DayPass)
         {
             var fidelidad = cliente.FidelidadCuenta ??= new FidelidadCuenta { ClienteId = cliente.ClienteId };

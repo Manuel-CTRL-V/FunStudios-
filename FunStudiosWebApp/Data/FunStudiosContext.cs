@@ -5,8 +5,8 @@ namespace FunStudiosWebApp.Data;
 
 /// <summary>
 /// DbContext de FunStudios. La configuración completa de entidades y relaciones
-/// se hace inline en OnModelCreating, siguiendo el patrón del proyecto de referencia.
-/// Por ahora usa el proveedor InMemory; al migrar a SQL Server solo cambia la
+/// se hace inline en OnModelCreating
+/// Por ahora usa el proveedor InMemory; al migrar a SQL Server solo cambiamos la
 /// configuración del proveedor en Program.cs y se agregan los entity.ToTable("...")
 /// con los nombres indicados en cada sección.
 /// </summary>

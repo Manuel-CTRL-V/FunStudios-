@@ -7,30 +7,30 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---------- Cultura de la aplicación: DOP (peso dominicano, $) ----------
+// Cultura de la aplicación DOP (peso dominicano, $)
 var culturaDO = new CultureInfo("es-DO");
 culturaDO.NumberFormat.CurrencySymbol = "$";
 CultureInfo.DefaultThreadCurrentCulture = culturaDO;
 CultureInfo.DefaultThreadCurrentUICulture = culturaDO;
 
-// ---------- MVC ----------
+// MVC
 builder.Services.AddControllersWithViews();
 
-// ---------- Base de datos ----------
+// Base de datos
 // Por ahora se usa el proveedor InMemory para mimiquear el comportamiento
-// completo del sistema sin SQL Server. Al migrar a producción solo cambia
+// completo del sistema sin SQL Server. Al migrar a producción solo cambiamos
 // esta línea por UseSqlServer con la cadena de conexión de appsettings.json.
 builder.Services.AddDbContext<FunStudiosContext>(options =>
     options.UseInMemoryDatabase("FunStudiosDb"));
 
-// ---------- Servicios de negocio ----------
+// Servicios de negocio
 builder.Services.AddScoped<IBiometriaService, SimuladorBiometriaService>();
 builder.Services.AddScoped<IAccesoService, AccesoService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 
-// ---------- Autenticación por cookies con roles (RF11) ----------
+// Autenticación por cookies con roles (RF11)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -45,14 +45,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 var app = builder.Build();
 
-// ---------- Siembra inicial (catálogos + datos demo) ----------
+// Siembra inicial (catálogos + datos demo)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FunStudiosContext>();
     await FunStudiosSeeder.InicializarAsync(context);
 }
 
-// ---------- Pipeline HTTP ----------
+// Pipeline HTTP
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

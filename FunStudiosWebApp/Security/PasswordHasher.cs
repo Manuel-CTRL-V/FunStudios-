@@ -5,7 +5,7 @@ namespace FunStudiosWebApp.Security;
 /// <summary>
 /// Utilidad para hashear y verificar contraseñas con PBKDF2 (Rfc2898DeriveBytes).
 /// El formato almacenado es: {iteraciones}.{saltBase64}.{hashBase64}
-/// No se guardan contraseñas en texto plano (regla de seguridad del proyecto).
+/// No se guardan contraseñas en texto plano.
 /// </summary>
 public static class PasswordHasher
 {

@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace FunStudiosWebApp.Controllers;
 
 /// <summary>
-/// Endpoint del checkpoint: escaneo biom??trico simulado y registro de entradas/salidas.
-/// Todas las acciones responden JSON porque el checkpoint opera por AJAX sin recargar la p??gina.
+/// Endpoint del checkpoint: escaneo biométrico simulado y registro de entradas/salidas.
+/// Todas las acciones responden JSON porque el checkpoint opera por AJAX sin recargar la página.
 /// </summary>
 [Authorize]
 public class AccesoController : Controller
