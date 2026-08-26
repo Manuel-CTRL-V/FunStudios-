@@ -17,7 +17,7 @@ public class ClienteService : IClienteService
         _biometria = biometria;
     }
 
-    public async Task<List<ClienteListadoItemViewModel>> ObtenerListadoAsync(string? busqueda)
+    public async Task<List<ClienteListadoItemViewModel>> ObtenerListadoAsync(string? busqueda, string? estado)
     {
         var consulta = _context.Clientes
             .Include(c => c.Familia)
@@ -66,7 +66,14 @@ public class ClienteService : IClienteService
                 EstaDentro = dentro,
                 UltimaEntradaTexto = FormatearUltimaEntrada(ultimasEntradas.GetValueOrDefault(c.ClienteId))
             };
-        }).ToList();
+        })
+        .Where(c => estado?.ToLower() switch
+        {
+            "dentro" => c.EstaDentro,
+            "fuera" => !c.EstaDentro,
+            _ => true
+        })
+        .ToList();
     }
 
     private static string FormatearUltimaEntrada(DateTime? ultimaEntrada)
@@ -118,7 +125,9 @@ public class ClienteService : IClienteService
             HuellaTutorEnrolada = cliente.Familia?.HuellaTutorTemplate != null,
             FamiliaId = cliente.FamiliaId,
             ApellidosFamilia = cliente.Familia?.ApellidosFamilia ?? string.Empty,
+            NombreTutor1 = cliente.Familia?.NombreTutor1,
             TelefonoTutor1 = cliente.Familia?.TelefonoTutor1 ?? string.Empty,
+            NombreTutor2 = cliente.Familia?.NombreTutor2,
             TelefonoTutor2 = cliente.Familia?.TelefonoTutor2,
             ConteoChecks = cliente.FidelidadCuenta?.ConteoChecks ?? 0,
             EntradasGratisDisponibles = cliente.FidelidadCuenta?.EntradasGratisGanadas ?? 0,
@@ -134,7 +143,8 @@ public class ClienteService : IClienteService
                 FechaHoraSalida = eh.FechaHoraSalida,
                 TipoAccesoNombre = eh.TipoAcceso?.NombreAcceso ?? string.Empty,
                 TipoAccesoId = eh.TipoAccesoId,
-                TutorOtro = eh.TutorOtro,
+                TutorNombre = eh.TutorNombre,
+                TutorTelefono = eh.TutorTelefono,
                 MontoVenta = eh.Venta?.Monto
             }).ToList(),
             Membresias = cliente.Membresias
@@ -217,7 +227,9 @@ public class ClienteService : IClienteService
             familia = new Familia
             {
                 ApellidosFamilia = modelo.ApellidosFamilia.Trim(),
+                NombreTutor1 = string.IsNullOrWhiteSpace(modelo.NombreTutor1) ? null : modelo.NombreTutor1.Trim(),
                 TelefonoTutor1 = modelo.TelefonoTutor1.Trim(),
+                NombreTutor2 = string.IsNullOrWhiteSpace(modelo.NombreTutor2) ? null : modelo.NombreTutor2.Trim(),
                 TelefonoTutor2 = string.IsNullOrWhiteSpace(modelo.TelefonoTutor2) ? null : modelo.TelefonoTutor2.Trim()
             };
             _context.Familias.Add(familia);
@@ -243,23 +255,27 @@ public class ClienteService : IClienteService
 
         await _context.SaveChangesAsync();
 
-        // ---------- Enrolamiento opcional del tutor (RF4) ----------
+        // ---------- Enrolamiento del tutor (RF4: obligatorio para niños < 2 años) ----------
         var edad = cliente.Edad;
-        if (modelo.ConHuellaTutor && edad < 2 && !string.IsNullOrWhiteSpace(modelo.HuellaTutorTemplateBase64))
+        if (edad < 2 && string.IsNullOrWhiteSpace(modelo.HuellaTutorTemplateBase64))
+            return (false, "Los niños menores de 2 años requieren la huella biométrica de un tutor para ingresar.", cliente.ClienteId);
+
+        if (!string.IsNullOrWhiteSpace(modelo.HuellaTutorTemplateBase64))
         {
             try
             {
                 var templateTutor = Convert.FromBase64String(modelo.HuellaTutorTemplateBase64);
-                var duplicadoTutor = await _context.Familias.AnyAsync(f => f.HuellaTutorTemplate!.SequenceEqual(templateTutor));
-                if (!duplicadoTutor)
-                {
-                    familia.HuellaTutorTemplate = templateTutor;
-                    await _context.SaveChangesAsync();
-                }
+                var duplicadoTutor = await _context.Familias.AnyAsync(f =>
+                    f.HuellaTutorTemplate != null && f.HuellaTutorTemplate.SequenceEqual(templateTutor));
+                if (duplicadoTutor)
+                    return (false, "Esta huella de tutor ya está registrada en el sistema.", cliente.ClienteId);
+
+                familia.HuellaTutorTemplate = templateTutor;
+                await _context.SaveChangesAsync();
             }
             catch (FormatException)
             {
-                // La huella del tutor es opcional; un template corrupto no bloquea el registro.
+                // Template corrupto: se omite pero no bloquea el registro del niño.
             }
         }
 
@@ -292,7 +308,9 @@ public class ClienteService : IClienteService
 
         if (cliente.Familia != null)
         {
+            cliente.Familia.NombreTutor1 = string.IsNullOrWhiteSpace(modelo.NombreTutor1) ? null : modelo.NombreTutor1.Trim();
             cliente.Familia.TelefonoTutor1 = modelo.TelefonoTutor1.Trim();
+            cliente.Familia.NombreTutor2 = string.IsNullOrWhiteSpace(modelo.NombreTutor2) ? null : modelo.NombreTutor2.Trim();
             cliente.Familia.TelefonoTutor2 = string.IsNullOrWhiteSpace(modelo.TelefonoTutor2) ? null : modelo.TelefonoTutor2.Trim();
         }
 

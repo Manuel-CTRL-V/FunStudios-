@@ -44,6 +44,13 @@ public class ResultadoEscaneoViewModel
     public string? NombreMembresiaVigente { get; set; }
     public DateOnly? VenceMembresia { get; set; }
 
+    // Tutores registrados de la familia (para elegir quién acompaña en la entrada)
+
+    public string? NombreTutor1 { get; set; }
+    public string? TelefonoTutor1 { get; set; }
+    public string? NombreTutor2 { get; set; }
+    public string? TelefonoTutor2 { get; set; }
+
     /// <summary>Opciones de acceso disponibles para registrar una entrada.</summary>
     public List<OpcionAccesoViewModel> OpcionesEntrada { get; set; } = new();
 }
@@ -65,7 +72,13 @@ public class RegistrarEntradaRequest
     public int TipoAccesoId { get; set; }
     public int? MetodoPagoId { get; set; }
     public decimal Monto { get; set; }
-    public string? TutorOtro { get; set; }
+
+    /// <summary>"tutor1" (por defecto) | "tutor2" | "otro".</summary>
+    public string? SeleccionTutor { get; set; }
+
+    /// <summary>Solo cuando SeleccionTutor = "otro": datos del acompañante no registrado.</summary>
+    public string? TutorOtroNombre { get; set; }
+    public string? TutorOtroTelefono { get; set; }
 }
 
 /// <summary>Respuesta al registrar una entrada (incluye alerta de premio RF10).</summary>

@@ -172,7 +172,11 @@ public class AccesoService : IAccesoService
             YaCobroCheckHoy = yaCobroCheckHoy,
             MembresiaVigente = membresiaVigente != null,
             NombreMembresiaVigente = membresiaVigente?.NombreMembresia,
-            VenceMembresia = membresiaVigente?.FechaFin
+            VenceMembresia = membresiaVigente?.FechaFin,
+            NombreTutor1 = cliente.Familia?.NombreTutor1,
+            TelefonoTutor1 = cliente.Familia?.TelefonoTutor1,
+            NombreTutor2 = cliente.Familia?.NombreTutor2,
+            TelefonoTutor2 = cliente.Familia?.TelefonoTutor2
         };
 
         // Opciones de acceso disponibles cuando está fuera del parque
@@ -287,7 +291,32 @@ public class AccesoService : IAccesoService
 
         await _context.SaveChangesAsync();
 
-        // ---------- Registro de la entrada (RF6) ----------
+        // ---------- Registro de la entrada (RF6): tutor responsable ----------
+        var seleccion = solicitud.SeleccionTutor ?? "tutor1";
+        string? tutorNombre;
+        string? tutorTelefono;
+
+        if (seleccion == "tutor2" && !string.IsNullOrWhiteSpace(cliente.Familia?.TelefonoTutor2))
+        {
+            tutorNombre = string.IsNullOrWhiteSpace(cliente.Familia?.NombreTutor2) ? "Tutor 2" : cliente.Familia!.NombreTutor2!.Trim();
+            tutorTelefono = cliente.Familia!.TelefonoTutor2!.Trim();
+        }
+        else if (seleccion == "otro")
+        {
+            if (string.IsNullOrWhiteSpace(solicitud.TutorOtroNombre))
+            {
+                resultado.Mensaje = "Al seleccionar «Otro acompañante», ingrese el nombre.";
+                return resultado;
+            }
+            tutorNombre = solicitud.TutorOtroNombre.Trim();
+            tutorTelefono = string.IsNullOrWhiteSpace(solicitud.TutorOtroTelefono) ? null : solicitud.TutorOtroTelefono.Trim();
+        }
+        else
+        {
+            tutorNombre = string.IsNullOrWhiteSpace(cliente.Familia?.NombreTutor1) ? "Tutor 1" : cliente.Familia!.NombreTutor1!.Trim();
+            tutorTelefono = cliente.Familia?.TelefonoTutor1?.Trim();
+        }
+
         var entrada = new EntradaHistorial
         {
             FamiliaId = cliente.FamiliaId,
@@ -298,7 +327,8 @@ public class AccesoService : IAccesoService
                 ? cliente.Membresias.Where(m => m.Vigente).OrderByDescending(m => m.FechaFin).First().MembresiaId
                 : null,
             VentaId = venta?.VentaId,
-            TutorOtro = string.IsNullOrWhiteSpace(solicitud.TutorOtro) ? null : solicitud.TutorOtro.Trim()
+            TutorNombre = tutorNombre,
+            TutorTelefono = tutorTelefono
         };
 
         _context.EntradasHistorial.Add(entrada);

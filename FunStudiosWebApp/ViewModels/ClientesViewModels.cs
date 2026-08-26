@@ -36,7 +36,9 @@ public class ClienteDetalleViewModel
     // Familia
     public int FamiliaId { get; set; }
     public string ApellidosFamilia { get; set; } = string.Empty;
+    public string? NombreTutor1 { get; set; }
     public string TelefonoTutor1 { get; set; } = string.Empty;
+    public string? NombreTutor2 { get; set; }
     public string? TelefonoTutor2 { get; set; }
 
     // Fidelidad
@@ -63,7 +65,8 @@ public class EntradaItemViewModel
     public DateTime? FechaHoraSalida { get; set; }
     public string TipoAccesoNombre { get; set; } = string.Empty;
     public int TipoAccesoId { get; set; }
-    public string? TutorOtro { get; set; }
+    public string? TutorNombre { get; set; }
+    public string? TutorTelefono { get; set; }
     public decimal? MontoVenta { get; set; }
 
     public bool EstaDentro => FechaHoraSalida == null;
@@ -122,7 +125,12 @@ public class ClienteCrearViewModel
     // Datos de la familia nueva
 
     public string ApellidosFamilia { get; set; } = string.Empty;
+
+    /// <summary>Nombre propio del tutor principal (quien normalmente acompaña al niño).</summary>
+    public string? NombreTutor1 { get; set; }
     public string TelefonoTutor1 { get; set; } = string.Empty;
+
+    public string? NombreTutor2 { get; set; }
     public string? TelefonoTutor2 { get; set; }
 
     // Datos del niño
@@ -145,7 +153,12 @@ public class ClienteEditarViewModel
     public string Nombre { get; set; } = string.Empty;
     public DateOnly? FechaNacimiento { get; set; }
     public string? NotasMedicas { get; set; }
+    // Tutor 1
+    public string? NombreTutor1 { get; set; }
     public string TelefonoTutor1 { get; set; } = string.Empty;
+
+    // Tutor 2 (opcional)
+    public string? NombreTutor2 { get; set; }
     public string? TelefonoTutor2 { get; set; }
 }
 

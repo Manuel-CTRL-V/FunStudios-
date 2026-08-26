@@ -115,14 +115,46 @@
                                 <option value="2">Tarjeta</option>
                                 <option value="3">Transferencia</option>
                             </select>
-                            <input id="monto" type="number" step="0.01" min="0" value="250.00"
+                            <input id="monto" type="number" step="1" min="0" value="250"
                                    class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none" />
                         </div>
 
-                        <div class="flex flex-col gap-1">
-                            <label class="font-label-sm text-on-surface-variant ml-4">Acompañante no registrado (opcional)</label>
-                            <input id="tutor-otro" placeholder="ej. Abuela Rosa"
-                                   class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none placeholder:text-outline-variant" />
+                        <div class="flex flex-col gap-stack-sm">
+                            <label class="font-label-sm text-on-surface-variant ml-4">¿Con quién ingresó el niño?</label>
+                            <div class="flex flex-col gap-2" id="tutor-radios">
+                                <label class="flex items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors">
+                                    <input type="radio" name="seleccion-tutor" value="tutor1" checked onchange="toggleTutorOtro()" class="accent-[#0077ce]" />
+                                    <span class="flex-1">
+                                        <span class="block font-label-lg text-on-surface" id="lbl-tutor1">Tutor 1</span>
+                                        <span class="block font-label-sm text-on-surface-variant" id="tel-tutor1"></span>
+                                    </span>
+                                </label>
+                                <label id="opt-tutor2" class="hidden items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors">
+                                    <input type="radio" name="seleccion-tutor" value="tutor2" onchange="toggleTutorOtro()" class="accent-[#0077ce]" />
+                                    <span class="flex-1">
+                                        <span class="block font-label-lg text-on-surface" id="lbl-tutor2">Tutor 2</span>
+                                        <span class="block font-label-sm text-on-surface-variant" id="tel-tutor2"></span>
+                                    </span>
+                                </label>
+                                <label class="flex items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors">
+                                    <input type="radio" name="seleccion-tutor" value="otro" onchange="toggleTutorOtro()" class="accent-[#0077ce]" />
+                                    <span class="font-label-lg text-on-surface">Otro acompañante no registrado</span>
+                                </label>
+                            </div>
+
+                            <!-- Campos para acompañante no registrado -->
+                            <div id="tutor-otro-campos" class="hidden flex-col gap-stack-sm mt-unit pl-stack-md border-l-2 border-outline-variant/30">
+                                <div class="flex flex-col gap-1">
+                                    <label for="tutor-otro-nombre" class="font-label-sm text-on-surface-variant ml-4">Nombre <b>(obligatorio)</b></label>
+                                    <input id="tutor-otro-nombre" placeholder="ej. Abuela Rosa"
+                                           class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none placeholder:text-outline-variant" />
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label for="tutor-otro-telefono" class="font-label-sm text-on-surface-variant ml-4">Teléfono <b class="text-outline">(opcional)</b></label>
+                                    <input id="tutor-otro-telefono" placeholder="809-000-0000"
+                                           class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none placeholder:text-outline-variant" />
+                                </div>
+                            </div>
                         </div>
 
                         <button type="submit"
@@ -199,9 +231,12 @@
                     <span class="font-label-lg uppercase tracking-wider text-on-surface-variant">Entradas gratis fidelidad</span>
                     <span class="material-symbols-outlined text-secondary-container">stars</span>
                 </div>
-                <div class="flex items-end gap-stack-sm">
-                    <span class="text-display-lg text-on-surface">@Model.GratisCanjeadasTotal</span>
-                    <span class="text-body-md text-on-surface-variant font-bold mb-2">@Model.GratisDisponiblesSaldo por canjear</span>
+                <div class="flex items-end gap-stack-md">
+                    <span class="text-display-lg text-on-surface font-extrabold">@Model.GratisCanjeadasTotal</span>
+                    <div class="leading-none mb-2">
+                        <span class="text-headline-sm font-bold text-secondary">+@Model.GratisDisponiblesSaldo</span>
+                        <span class="block font-label-sm text-on-surface-variant">por canjear</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -339,6 +374,7 @@
             dentroBox.classList.add('hidden'); dentroBox.classList.remove('flex');
             formEntrada.classList.remove('hidden'); formEntrada.classList.add('flex');
             pintarOpciones(data);
+            pintarTutores(data);
         }
 
         window.clienteActual = data;
@@ -370,17 +406,50 @@
         document.getElementById('pago-section').classList.toggle('hidden', !requiere);
     }
 
+    function toggleTutorOtro() {
+        const esOtro = document.querySelector('input[name="seleccion-tutor"]:checked')?.value === 'otro';
+        document.getElementById('tutor-otro-campos').classList.toggle('hidden', !esOtro);
+        document.getElementById('tutor-otro-campos').classList.toggle('flex', esOtro);
+    }
+
+    function pintarTutores(data) {
+        // Tutor 1 siempre se muestra
+        document.getElementById('lbl-tutor1').textContent = data.nombreTutor1 || 'Tutor 1';
+        document.getElementById('tel-tutor1').textContent = data.telefonoTutor1 || '';
+
+        // Tutor 2: solo si existe
+        const optT2 = document.getElementById('opt-tutor2');
+        if (data.nombreTutor2 || data.telefonoTutor2) {
+            document.getElementById('lbl-tutor2').textContent = data.nombreTutor2 || 'Tutor 2';
+            document.getElementById('tel-tutor2').textContent = data.telefonoTutor2 || '';
+            optT2.classList.remove('hidden');
+            optT2.classList.add('flex');
+        } else {
+            optT2.classList.add('hidden');
+            optT2.classList.remove('flex');
+        }
+
+        // Reset a tutor 1
+        document.querySelector('input[name="seleccion-tutor"][value="tutor1"]').checked = true;
+        toggleTutorOtro();
+    }
+
     async function registrarEntrada(ev) {
         ev.preventDefault();
         const sel = document.querySelector('input[name="tipo-acceso"]:checked');
+        const tutorSel = document.querySelector('input[name="seleccion-tutor"]:checked')?.value || 'tutor1';
 
         const body = {
             clienteId: window.clienteActual.clienteId,
             tipoAccesoId: parseInt(sel.value),
             metodoPagoId: sel.dataset.requierePago === 'true'
                 ? parseInt(document.getElementById('metodo-pago').value) || null : null,
-            monto: parseFloat(document.getElementById('monto').value) || 0,
-            tutorOtro: document.getElementById('tutor-otro').value || null
+            monto: parseInt(document.getElementById('monto').value) || 0,
+            seleccionTutor: tutorSel,
+            tutorOtroNombre: tutorSel === 'otro'
+                ? document.getElementById('tutor-otro-nombre').value || null : null,
+            tutorOtroTelefono: tutorSel === 'otro'
+                ? document.getElementById('tutor-otro-telefono').value || null : null
         };
 
         const data = await postJson('/Acceso/RegistrarEntrada', body);

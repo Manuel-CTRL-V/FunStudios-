@@ -26,8 +26,14 @@ public class EntradaHistorial
     /// <summary>Null cuando la entrada no proviene de una venta directa (ej. Day Pass siempre genera venta).</summary>
     public int? VentaId { get; set; }
 
-    /// <summary>Acompañante que no corresponde a los tutores registrados (abuela, tío, etc.).</summary>
-    public string? TutorOtro { get; set; }
+    /// <summary>
+    /// Tutor responsable que acompañó al niño en esta entrada (RF6).
+    /// Se guarda una "foto" del nombre y teléfono al momento de registrar la entrada:
+    /// puede ser el tutor 1, el tutor 2 o un acompañante no registrado.
+    /// </summary>
+    public string? TutorNombre { get; set; }
+
+    public string? TutorTelefono { get; set; }
 
     // Propiedades calculadas
 

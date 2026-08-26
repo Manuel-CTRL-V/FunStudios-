@@ -81,10 +81,25 @@
             </h3>
             <ul class="flex flex-col gap-stack-sm text-body-md">
                 <li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">badge</span> Familia @Model.ApellidosFamilia</li>
-                <li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">phone_iphone</span> Tutor 1: @Model.TelefonoTutor1</li>
-                @if (!string.IsNullOrWhiteSpace(Model.TelefonoTutor2))
+                <li class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-[18px]">person</span>
+                    <span>
+                        <span class="font-bold">@(Model.NombreTutor1 ?? "Tutor 1")</span>
+                        <span class="text-on-surface-variant ml-1">· @Model.TelefonoTutor1</span>
+                    </span>
+                </li>
+                @if (!string.IsNullOrWhiteSpace(Model.NombreTutor2) || !string.IsNullOrWhiteSpace(Model.TelefonoTutor2))
                 {
-                    <li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">phone_iphone</span> Tutor 2: @Model.TelefonoTutor2</li>
+                    <li class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-[18px]">person</span>
+                        <span>
+                            <span class="font-bold">@(Model.NombreTutor2 ?? "Tutor 2")</span>
+                            @if (!string.IsNullOrWhiteSpace(Model.TelefonoTutor2))
+                            {
+                                <span class="text-on-surface-variant ml-1">· @Model.TelefonoTutor2</span>
+                            }
+                        </span>
+                    </li>
                 }
                 <li class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary text-[18px]">fingerprint</span>

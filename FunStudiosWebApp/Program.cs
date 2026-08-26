@@ -1,3 +1,4 @@
+using System.Globalization;
 using FunStudiosWebApp.Data;
 using FunStudiosWebApp.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -5,6 +6,12 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ---------- Cultura de la aplicación: DOP (peso dominicano, $) ----------
+var culturaDO = new CultureInfo("es-DO");
+culturaDO.NumberFormat.CurrencySymbol = "$";
+CultureInfo.DefaultThreadCurrentCulture = culturaDO;
+CultureInfo.DefaultThreadCurrentUICulture = culturaDO;
 
 // ---------- MVC ----------
 builder.Services.AddControllersWithViews();

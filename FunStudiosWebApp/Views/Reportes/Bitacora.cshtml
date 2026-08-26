@@ -84,7 +84,7 @@
                                class="font-bold text-primary hover:text-surface-tint">@e.NombreCliente @e.ApellidosFamilia</a>
                         </td>
                         <td class="px-gutter py-stack-md">@e.TipoAccesoNombre</td>
-                        <td class="px-gutter py-stack-md text-on-surface-variant">@(string.IsNullOrWhiteSpace(e.TutorOtro) ? "—" : e.TutorOtro)</td>
+                        <td class="px-gutter py-stack-md text-on-surface-variant">@(string.IsNullOrWhiteSpace(e.TutorNombre) ? "—" : e.TutorNombre)</td>
                         <td class="px-gutter py-stack-md whitespace-nowrap">
                             @if (e.EstaDentro)
                             {

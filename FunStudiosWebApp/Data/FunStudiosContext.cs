@@ -59,7 +59,9 @@ public class FunStudiosContext : DbContext
         {
             entity.HasKey(f => f.FamiliaId);
             entity.Property(f => f.ApellidosFamilia).HasMaxLength(150).IsRequired();
+            entity.Property(f => f.NombreTutor1).HasMaxLength(100);
             entity.Property(f => f.TelefonoTutor1).HasMaxLength(20).IsRequired();
+            entity.Property(f => f.NombreTutor2).HasMaxLength(100);
             entity.Property(f => f.TelefonoTutor2).HasMaxLength(20);
 
             entity.HasMany(f => f.Clientes)
@@ -109,7 +111,8 @@ public class FunStudiosContext : DbContext
         {
             entity.HasKey(eh => eh.EntradaId);
             entity.Property(eh => eh.FechaHoraEntrada).IsRequired();
-            entity.Property(eh => eh.TutorOtro).HasMaxLength(150);
+            entity.Property(eh => eh.TutorNombre).HasMaxLength(150);
+            entity.Property(eh => eh.TutorTelefono).HasMaxLength(20);
 
             entity.HasOne(eh => eh.Familia)
                   .WithMany()

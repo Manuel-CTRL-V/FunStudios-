@@ -10,7 +10,13 @@ public class Familia
 
     public string ApellidosFamilia { get; set; } = string.Empty;
 
+    /// <summary>Nombre propio del tutor principal (quien normalmente acompaña al niño).</summary>
+    public string? NombreTutor1 { get; set; }
+
     public string TelefonoTutor1 { get; set; } = string.Empty;
+
+    /// <summary>Nombre del segundo tutor, si existe.</summary>
+    public string? NombreTutor2 { get; set; }
 
     public string? TelefonoTutor2 { get; set; }
 

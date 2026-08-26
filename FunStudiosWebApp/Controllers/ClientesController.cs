@@ -22,10 +22,11 @@ public class ClientesController : Controller
         int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id) ? id : null;
 
     // GET: /Clientes
-    public async Task<IActionResult> Index(string? busqueda)
+    public async Task<IActionResult> Index(string? busqueda, string? estado)
     {
         ViewData["Busqueda"] = busqueda;
-        var clientes = await _clienteService.ObtenerListadoAsync(busqueda);
+        ViewData["Estado"] = estado;
+        var clientes = await _clienteService.ObtenerListadoAsync(busqueda, estado);
         return View(clientes);
     }
 
@@ -81,7 +82,9 @@ public class ClientesController : Controller
             Nombre = detalle.Nombre,
             FechaNacimiento = detalle.FechaNacimiento,
             NotasMedicas = detalle.NotasMedicas,
+            NombreTutor1 = detalle.NombreTutor1,
             TelefonoTutor1 = detalle.TelefonoTutor1,
+            NombreTutor2 = detalle.NombreTutor2,
             TelefonoTutor2 = detalle.TelefonoTutor2
         });
     }

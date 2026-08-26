@@ -51,21 +51,34 @@
             <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-primary-container text-sm">family_restroom</span>
             </div>
-            <h3 class="text-headline-sm text-on-surface">Teléfonos de la Familia</h3>
+            <h3 class="text-headline-sm text-on-surface">Datos de los Tutores</h3>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
             <div class="flex flex-col gap-1">
+                <label asp-for="NombreTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Tutor 1</label>
+                <input asp-for="NombreTutor1" placeholder="ej. Laura Ortega"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+                <span asp-validation-for="NombreTutor1" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1">
                 <label asp-for="TelefonoTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 1</label>
-                <input asp-for="TelefonoTutor1"
+                <input asp-for="TelefonoTutor1" placeholder="809-000-0000"
                        class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
                 <span asp-validation-for="TelefonoTutor1" class="font-label-sm text-error ml-4"></span>
             </div>
 
             <div class="flex flex-col gap-1">
+                <label asp-for="NombreTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Tutor 2 (opcional)</label>
+                <input asp-for="NombreTutor2" placeholder="ej. Carlos Pérez"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none placeholder:text-outline-variant" />
+            </div>
+
+            <div class="flex flex-col gap-1">
                 <label asp-for="TelefonoTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 2 (opcional)</label>
-                <input asp-for="TelefonoTutor2"
-                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+                <input asp-for="TelefonoTutor2" placeholder="809-000-0000"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none placeholder:text-outline-variant" />
             </div>
         </div>
 

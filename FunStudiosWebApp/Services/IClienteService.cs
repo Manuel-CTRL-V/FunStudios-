@@ -5,7 +5,7 @@ namespace FunStudiosWebApp.Services;
 /// <summary>Gestión de clientes: listado, perfil, registro con enrolamiento biométrico y edición.</summary>
 public interface IClienteService
 {
-    Task<List<ClienteListadoItemViewModel>> ObtenerListadoAsync(string? busqueda);
+    Task<List<ClienteListadoItemViewModel>> ObtenerListadoAsync(string? busqueda, string? estado);
 
     Task<ClienteDetalleViewModel?> ObtenerDetalleAsync(int clienteId);
 

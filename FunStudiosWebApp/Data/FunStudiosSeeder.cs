@@ -90,32 +90,47 @@ public static class FunStudiosSeeder
             new()
             {
                 FamiliaId = 1, ApellidosFamilia = "Pérez-García",
-                TelefonoTutor1 = "555-0101", TelefonoTutor2 = "555-0102"
+                NombreTutor1 = "Laura Ortega",   TelefonoTutor1 = "555-0101",
+                NombreTutor2 = "Carlos Pérez",   TelefonoTutor2 = "555-0102"
             },
             new()
             {
                 FamiliaId = 2, ApellidosFamilia = "Rodríguez",
-                TelefonoTutor1 = "555-0203", TelefonoTutor2 = null
+                NombreTutor1 = "María Rodríguez", TelefonoTutor1 = "555-0203",
+                NombreTutor2 = null,                TelefonoTutor2 = null
             },
             new()
             {
                 FamiliaId = 3, ApellidosFamilia = "Thompson-López",
-                TelefonoTutor1 = "555-0304", TelefonoTutor2 = "555-0305"
+                NombreTutor1 = "Ana López",       TelefonoTutor1 = "555-0304",
+                NombreTutor2 = "James Thompson",  TelefonoTutor2 = "555-0305"
             },
             new()
             {
                 FamiliaId = 4, ApellidosFamilia = "Kim Herrera",
-                TelefonoTutor1 = "555-0406", TelefonoTutor2 = null
+                NombreTutor1 = "Soo-Yeon Kim",    TelefonoTutor1 = "555-0406",
+                NombreTutor2 = null,                TelefonoTutor2 = null
             },
             new()
             {
                 FamiliaId = 5, ApellidosFamilia = "Gómez Ruiz",
-                TelefonoTutor1 = "555-0507", TelefonoTutor2 = "555-0508"
+                NombreTutor1 = "Valentina Gómez", TelefonoTutor1 = "555-0507",
+                NombreTutor2 = "Andrés Ruiz",     TelefonoTutor2 = "555-0508"
             }
         };
 
         context.Familias.AddRange(familias);
         await context.SaveChangesAsync();
+
+        // Tutor principal de cada familia para asignar en las entradas históricas
+        var tutorPorFamilia = new Dictionary<int, (string nombre, string? telefono)>
+        {
+            [1] = ("Laura Ortega",     "555-0101"),
+            [2] = ("María Rodríguez",  "555-0203"),
+            [3] = ("Ana López",        "555-0304"),
+            [4] = ("Soo-Yeon Kim",     "555-0406"),
+            [5] = ("Valentina Gómez",  "555-0507")
+        };
 
         var clientes = new List<Cliente>
         {
@@ -194,6 +209,15 @@ public static class FunStudiosSeeder
     {
         var hoy = DateTime.Now.Date;
 
+        var tutorPorFamilia = new Dictionary<int, (string nombre, string? telefono)>
+        {
+            [1] = ("Laura Ortega",     "555-0101"),
+            [2] = ("María Rodríguez",  "555-0203"),
+            [3] = ("Ana López",        "555-0304"),
+            [4] = ("Soo-Yeon Kim",     "555-0406"),
+            [5] = ("Valentina Gómez",  "555-0507")
+        };
+
         // ---------- Historial de días anteriores ----------
         var ventasHistoricas = new List<Venta>();
         for (var diasAtras = 14; diasAtras >= 1; diasAtras--)
@@ -222,27 +246,33 @@ public static class FunStudiosSeeder
             // Una entrada gratis canjeadas cada ciertos días (RF10 - histórico)
             if (diasAtras % 5 == 0)
             {
+                var familiaGratis = diasAtras % 2 == 0 ? 5 : 2;
                 context.EntradasHistorial.Add(new EntradaHistorial
                 {
-                    FamiliaId = diasAtras % 2 == 0 ? 5 : 2,
+                    FamiliaId = familiaGratis,
                     ClienteId = diasAtras % 2 == 0 ? 501 : 201,
                     FechaHoraEntrada = fechaDia.AddHours(11),
                     FechaHoraSalida = fechaDia.AddHours(15),
-                    TipoAccesoId = TipoAcceso.FidelidadGratis
+                    TipoAccesoId = TipoAcceso.FidelidadGratis,
+                    TutorNombre = tutorPorFamilia[familiaGratis].nombre,
+                    TutorTelefono = tutorPorFamilia[familiaGratis].telefono
                 });
             }
 
             await context.SaveChangesAsync();
             foreach (var venta in ventasHistoricas.Where(v => v.VentaId == 0))
             {
+                var famId = context.Clientes.Local.First(c => c.ClienteId == venta.ClienteId).FamiliaId;
                 context.EntradasHistorial.Add(new EntradaHistorial
                 {
-                    FamiliaId = context.Clientes.Local.First(c => c.ClienteId == venta.ClienteId).FamiliaId,
+                    FamiliaId = famId,
                     ClienteId = venta.ClienteId,
                     FechaHoraEntrada = venta.FechaVenta.AddMinutes(5),
                     FechaHoraSalida = venta.FechaVenta.AddHours(4),
                     TipoAccesoId = TipoAcceso.DayPass,
-                    VentaId = venta.VentaId
+                    VentaId = venta.VentaId,
+                    TutorNombre = tutorPorFamilia[famId].nombre,
+                    TutorTelefono = tutorPorFamilia[famId].telefono
                 });
             }
             ventasHistoricas.Clear();
@@ -259,18 +289,31 @@ public static class FunStudiosSeeder
             (101, TipoAcceso.DayPass,   DateTime.Now.AddMinutes(-35))
         };
 
+        // Tutor de hoy por clienteId para asignar responsable de entrada
+        var tutorHoyPorCliente = new Dictionary<int, (string nombre, string? telefono)>
+        {
+            [301] = ("Ana López", "555-0304"),       // Emma → Thompson: tutor 2 (James) alguna vez, hoy Ana
+            [501] = ("Valentina Gómez", "555-0507"), // Sebastián → Gómez: tutor 1
+            [202] = ("María Rodríguez", null),       // Mateo → Rodríguez: solo tutor 1
+            [101] = ("Carlos Pérez", "555-0102")     // Leo → Pérez: tutor 2 Carlos acompaña hoy
+        };
+
         foreach (var (clienteId, tipoAccesoId, horaEntrada) in entradasHoy)
         {
             var familiaId = context.Clientes.Local
                 .First(c => c.ClienteId == clienteId)
                 .FamiliaId;
 
+            var tutor = tutorHoyPorCliente.GetValueOrDefault(clienteId, tutorPorFamilia[familiaId]);
+
             var entradaHoy = new EntradaHistorial
             {
                 FamiliaId = familiaId,
                 ClienteId = clienteId,
                 FechaHoraEntrada = horaEntrada,
-                TipoAccesoId = tipoAccesoId
+                TipoAccesoId = tipoAccesoId,
+                TutorNombre = tutor.nombre,
+                TutorTelefono = tutor.telefono
             };
 
             // El Day Pass de hoy genera su venta correspondiente (histórico básico de facturas)
@@ -300,7 +343,8 @@ public static class FunStudiosSeeder
             FechaHoraEntrada = hoy.AddHours(9).AddMinutes(30),
             FechaHoraSalida = DateTime.Now.AddHours(-1),
             TipoAccesoId = TipoAcceso.DayPass,
-            TutorOtro = "Abuela Rosa (tía materna)"
+            TutorNombre = "Abuela Rosa",
+            TutorTelefono = "809-555-1234"
         });
 
         await context.SaveChangesAsync();

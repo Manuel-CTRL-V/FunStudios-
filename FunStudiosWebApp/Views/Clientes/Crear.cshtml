@@ -52,23 +52,19 @@
                 <!-- Huella oculta que viaja con el formulario -->
                 <input type="hidden" asp-for="HuellaNinoTemplateBase64" />
 
-                <!-- Enrolamiento opcional del tutor (RF4) -->
+                <!-- Enrolamiento del tutor: se muestra automáticamente si el niño tiene < 2 años (RF4) -->
                 <div class="mt-stack-md pt-stack-md border-t border-outline-variant/30">
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" asp-for="ConHuellaTutor"
-                               onchange="toggleTutor()"
-                               class="peer sr-only" />
-                        <div class="w-6 h-6 rounded border-2 border-outline peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center group-hover:border-primary">
-                            <span class="material-symbols-outlined text-white text-[16px] opacity-0 peer-checked:opacity-100">check</span>
-                        </div>
-                        <span class="text-body-md text-on-surface">Niño &lt; 2 años (usar huella del Tutor)</span>
-                    </label>
+                    <div id="tutor-advertencia" class="hidden mb-stack-sm bg-secondary-fixed-dim/20 rounded-lg p-stack-md flex items-start gap-2">
+                        <span class="material-symbols-outlined text-secondary">info</span>
+                        <span class="font-label-lg text-secondary">Los niños menores de 2 años ingresan con la huella de un tutor.</span>
+                    </div>
+                    <input type="hidden" asp-for="ConHuellaTutor" value="false" />
 
                     <!-- Captura del tutor -->
-                    <div id="tutor-section" class="hidden flex-col items-center mt-stack-md pt-stack-md border-t border-outline-variant/30 w-full">
+                    <div id="tutor-section" class="hidden flex-col items-center w-full">
                         <div class="flex items-center gap-2 mb-stack-sm self-start">
                             <span class="material-symbols-outlined text-primary">family_restroom</span>
-                            <h4 class="font-label-lg text-on-surface">Huella del Tutor (opcional)</h4>
+                            <h4 class="font-label-lg text-on-surface">Captura Biométrica del Tutor</h4>
                         </div>
                         <button type="button" onclick="capturar('tutor')" id="ring-tutor"
                                 class="w-24 h-24 rounded-full border-4 border-[#ffda6a] flex items-center justify-center pulse-ring-wait bg-surface-bright cursor-pointer btn-press"
@@ -83,7 +79,7 @@
                                 </div>
                             }
                         </div>
-                        <p id="estado-tutor" class="font-label-sm text-on-surface-variant mt-stack-sm">Sin muestras</p>
+                        <p id="estado-tutor" class="font-label-sm text-on-surface-variant mt-stack-sm">Sin muestras (clic para capturar)</p>
                         <input type="hidden" asp-for="HuellaTutorTemplateBase64" />
                     </div>
                 </div>
@@ -179,22 +175,36 @@
                         </div>
                     </div>
 
+                    <!-- Tutor 1 -->
                     <div class="flex flex-col gap-1">
-                        <label asp-for="TelefonoTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 1</label>
+                        <label asp-for="NombreTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Tutor 1</label>
                         <div class="relative">
-                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">phone_iphone</span>
-                            <input asp-for="TelefonoTutor1" placeholder="(555) 000-0000"
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">person</span>
+                            <input asp-for="NombreTutor1" placeholder="ej. Laura Ortega"
                                    class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <label asp-for="TelefonoTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 2 (Opcional)</label>
+                        <label asp-for="TelefonoTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 1</label>
                         <div class="relative">
-                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant">phone_iphone</span>
-                            <input asp-for="TelefonoTutor2" placeholder="(555) 000-0000"
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">phone_iphone</span>
+                            <input asp-for="TelefonoTutor1" placeholder="809-000-0000"
                                    class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
                         </div>
+                    </div>
+
+                    <!-- Tutor 2 (opcional) -->
+                    <div class="flex flex-col gap-1">
+                        <label asp-for="NombreTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Tutor 2 (opcional)</label>
+                        <input asp-for="NombreTutor2" placeholder="ej. Carlos Pérez"
+                               class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label asp-for="TelefonoTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 2 (opcional)</label>
+                        <input asp-for="TelefonoTutor2" placeholder="809-000-0000"
+                               class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
                     </div>
                 </div>
             </div>
@@ -270,11 +280,38 @@
         }
     }
 
-    function toggleTutor() {
-        const seccion = document.getElementById('tutor-section');
-        seccion.classList.toggle('hidden');
-        seccion.classList.toggle('flex');
+    // ======= Lógica automática RF4: panel del tutor si el niño es < 2 años =======
+    function checkEdadTutor() {
+        const inputFecha = document.getElementById('FechaNacimiento');
+        const panelTutor = document.getElementById('tutor-section');
+        const advertencia = document.getElementById('tutor-advertencia');
+        const campoConHuella = document.querySelector('input[name="ConHuellaTutor"]');
+
+        if (!inputFecha.value) {
+            panelTutor.classList.add('hidden');
+            panelTutor.classList.remove('flex');
+            advertencia.classList.add('hidden');
+            advertencia.classList.remove('flex');
+            campoConHuella.value = 'false';
+            return;
+        }
+
+        const nacimiento = new Date(inputFecha.value + 'T00:00:00');
+        const hoy = new Date();
+        let edadAnios = hoy.getFullYear() - nacimiento.getFullYear();
+        const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
+        if (hoy < cumpleEsteAno) edadAnios--;
+
+        const esMenorDe2 = edadAnios < 2;
+        panelTutor.classList.toggle('hidden', !esMenorDe2);
+        panelTutor.classList.toggle('flex', esMenorDe2);
+        advertencia.classList.toggle('hidden', !esMenorDe2);
+        advertencia.classList.toggle('flex', esMenorDe2);
+        campoConHuella.value = esMenorDe2 ? 'true' : 'false';
     }
+
+    // Escuchar cambios en la fecha de nacimiento
+    document.getElementById('FechaNacimiento').addEventListener('change', checkEdadTutor);
 
     function toggleModoFamilia() {
         const usarExistente = document.querySelector('input[name="UsarFamiliaExistente"]:checked').value === 'true';
@@ -285,11 +322,17 @@
         existente.classList.toggle('hidden', !usarExistente);
 
         // Al usar familia existente, los campos nuevos no son requeridos
-        nueva.querySelectorAll('input[type="text"], input[type="tel"]').forEach(i =>
-            i.required = !usarExistente && i.id !== 'TelefonoTutor2');
+        nueva.querySelectorAll('input[type="text"], input[type="tel"]').forEach(i => {
+            if (i.id === 'TelefonoTutor2' || i.id === 'NombreTutor2' || i.id === 'NotasMedicas') {
+                i.required = false;
+            } else if (!usarExistente) {
+                i.required = true;
+            }
+        });
         document.getElementById('FamiliaExistenteId').required = usarExistente;
     }
 
     toggleModoFamilia();
+    checkEdadTutor();
 </script>
 }

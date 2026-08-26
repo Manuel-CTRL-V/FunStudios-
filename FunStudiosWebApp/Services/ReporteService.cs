@@ -163,7 +163,8 @@ public class ReporteService : IReporteService
                 FechaHoraSalida = eh.FechaHoraSalida,
                 TipoAccesoNombre = eh.TipoAcceso?.NombreAcceso ?? string.Empty,
                 TipoAccesoId = eh.TipoAccesoId,
-                TutorOtro = eh.TutorOtro,
+                TutorNombre = eh.TutorNombre,
+                TutorTelefono = eh.TutorTelefono,
                 MontoVenta = eh.Venta?.Monto
             }).ToList()
         };

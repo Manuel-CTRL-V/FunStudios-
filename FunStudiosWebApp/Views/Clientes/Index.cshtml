@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Gestión de Clientes";
     ViewData["Busqueda"] = Context.Request.Query["busqueda"].ToString();
+    ViewData["Estado"] = Context.Request.Query["estado"].ToString();
 }
 
 <!-- Encabezado de página -->
@@ -20,6 +21,28 @@
             <span class="material-symbols-outlined">add</span> Nuevo Cliente
         </a>
     </div>
+</div>
+
+<!-- Filtros de estado -->
+@{
+    var busquedaActual = Context.Request.Query["busqueda"].ToString();
+    string EstadoActual = Context.Request.Query["estado"].ToString();
+    string ClasePill(string valor) =>
+        EstadoActual == valor
+            ? "bg-primary text-on-primary shadow-soft"
+            : "bg-surface-container-high text-primary hover:bg-surface-dim transition-colors";
+}
+<div class="flex flex-wrap gap-stack-sm mb-gutter">
+    <a asp-controller="Clientes" asp-action="Index" asp-route-busqueda="@busquedaActual" asp-route-estado=""
+       class="px-gutter py-2 rounded-full font-label-lg @ClasePill("")">Todos</a>
+    <a asp-controller="Clientes" asp-action="Index" asp-route-busqueda="@busquedaActual" asp-route-estado="dentro"
+       class="px-gutter py-2 rounded-full font-label-lg flex items-center gap-unit @ClasePill("dentro")">
+        <span class="w-2 h-2 rounded-full bg-tertiary inline-block"></span> Dentro del parque
+    </a>
+    <a asp-controller="Clientes" asp-action="Index" asp-route-busqueda="@busquedaActual" asp-route-estado="fuera"
+       class="px-gutter py-2 rounded-full font-label-lg flex items-center gap-unit @ClasePill("fuera")">
+        <span class="w-2 h-2 rounded-full bg-outline-variant inline-block"></span> Fuera
+    </a>
 </div>
 
 <!-- Tabla principal -->
