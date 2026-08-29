@@ -151,7 +151,7 @@
                                 </div>
                                 <div class="flex flex-col gap-1">
                                     <label for="tutor-otro-telefono" class="font-label-sm text-on-surface-variant ml-4">Teléfono <b class="text-outline">(opcional)</b></label>
-                                    <input id="tutor-otro-telefono" placeholder="809-000-0000"
+                                    <input id="tutor-otro-telefono" placeholder="8090000000" type="tel" inputmode="numeric" maxlength="12" oninput="formatTelefono(this)"
                                            class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none placeholder:text-outline-variant" />
                                 </div>
                             </div>
@@ -280,6 +280,13 @@
 
 @section Scripts {
 <script>
+    function formatTelefono(el) {
+        let v = el.value.replace(/\D/g, '').substring(0, 10);
+        if (v.length > 6) v = v.substring(0, 3) + '-' + v.substring(3, 6) + '-' + v.substring(6);
+        else if (v.length > 3) v = v.substring(0, 3) + '-' + v.substring(3);
+        el.value = v;
+    }
+
     // ================= Checkpoint biométrico simulado (RF5-RF10) =================
     const TOKEN = document.querySelector('input[name="__RequestVerificationToken"]').value;
 

@@ -189,7 +189,7 @@
                         <label asp-for="TelefonoTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 1</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">phone_iphone</span>
-                            <input asp-for="TelefonoTutor1" placeholder="809-000-0000"
+                            <input asp-for="TelefonoTutor1" placeholder="8090000000" type="tel" inputmode="numeric" maxlength="12" oninput="formatTelefono(this)"
                                    class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
                         </div>
                     </div>
@@ -203,7 +203,7 @@
 
                     <div class="flex flex-col gap-1">
                         <label asp-for="TelefonoTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 2 (opcional)</label>
-                        <input asp-for="TelefonoTutor2" placeholder="809-000-0000"
+                        <input asp-for="TelefonoTutor2" placeholder="8090000000" type="tel" inputmode="numeric" maxlength="12" oninput="formatTelefono(this)"
                                class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
                     </div>
                 </div>
@@ -334,5 +334,12 @@
 
     toggleModoFamilia();
     checkEdadTutor();
+
+    function formatTelefono(el) {
+        let v = el.value.replace(/\D/g, '').substring(0, 10);
+        if (v.length > 6) v = v.substring(0, 3) + '-' + v.substring(3, 6) + '-' + v.substring(6);
+        else if (v.length > 3) v = v.substring(0, 3) + '-' + v.substring(3);
+        el.value = v;
+    }
 </script>
 }

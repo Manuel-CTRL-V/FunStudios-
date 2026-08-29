@@ -20,8 +20,12 @@ builder.Services.AddControllersWithViews();
 // Por ahora se usa el proveedor InMemory para mimiquear el comportamiento
 // completo del sistema sin SQL Server. Al migrar a producción solo cambiamos
 // esta línea por UseSqlServer con la cadena de conexión de appsettings.json.
+//builder.Services.AddDbContext<FunStudiosContext>(options =>
+//    options.UseInMemoryDatabase("FunStudiosDb"));
+
+// Base de datos — SQL Server
 builder.Services.AddDbContext<FunStudiosContext>(options =>
-    options.UseInMemoryDatabase("FunStudiosDb"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("FunStudiosDb")));
 
 // Servicios de negocio
 builder.Services.AddScoped<IBiometriaService, SimuladorBiometriaService>();
