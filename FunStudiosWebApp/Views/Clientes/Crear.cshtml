@@ -3,6 +3,23 @@
     ViewData["Title"] = "Nuevo Enrolamiento";
 }
 
+<style>
+    /* Barra de progreso indeterminada (mientras el lector recopila las muestras) */
+    .progress-indeterminate {
+        background-image: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+        background-size: 200% 100%;
+        animation: barrido 1.4s ease-in-out infinite;
+    }
+    .progress-done {
+        background-image: none;
+        animation: none;
+    }
+    @@keyframes barrido {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+
 <!-- Encabezado -->
 <div class="mb-stack-lg">
     <h2 class="text-display-lg text-on-surface mb-2">Nuevo Enrolamiento</h2>
@@ -33,19 +50,14 @@
                     </button>
 
                     <p class="font-label-lg text-on-surface text-center" id="estado-nino">Esperando huella digital</p>
-                    <p class="text-body-md text-on-surface-variant text-center">Haga clic en el círculo para capturar.</p>
+                    <p class="text-body-md text-on-surface-variant text-center" id="instruccion-nino">Haga clic en el círculo para capturar.</p>
 
-                    <!-- Barra de progreso 3 muestras -->
-                    <div class="flex justify-center gap-stack-sm mt-stack-md">
-                        @for (var i = 1; i <= 3; i++)
-                        {
-                            <div class="w-12 h-3 rounded-full bg-outline-variant/30 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 h-full w-0 bg-[#7ddc7a] transition-all duration-500" data-step="nino-@i"></div>
-                            </div>
-                        }
+                    <!-- Barra de progreso única: animada mientras captura, se llena al completar -->
+                    <div id="barra-nino" class="w-56 h-3 rounded-full bg-outline-variant/30 relative overflow-hidden mt-stack-md hidden">
+                        <div id="relleno-nino" class="absolute top-0 left-0 h-full w-0 bg-[#7ddc7a] transition-all duration-700 progress-indeterminate"></div>
                     </div>
                     <p class="font-label-sm text-label-sm text-center text-on-surface-variant uppercase tracking-wider mt-stack-md">
-                        Se requieren 3 muestras
+                        Ponga el dedo en el lector 4 veces
                     </p>
                 </div>
 
@@ -71,13 +83,8 @@
                                 title="Tomar muestra del tutor">
                             <span class="material-symbols-outlined text-[40px] text-outline-variant">fingerprint</span>
                         </button>
-                        <div class="flex justify-center gap-2 mt-stack-sm">
-                            @for (var i = 1; i <= 3; i++)
-                            {
-                                <div class="w-10 h-2.5 rounded-full bg-outline-variant/30 relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 h-full w-0 bg-[#7ddc7a] transition-all duration-500" data-step="tutor-@i"></div>
-                                </div>
-                            }
+                        <div id="barra-tutor" class="w-56 h-2.5 rounded-full bg-outline-variant/30 relative overflow-hidden mt-stack-sm hidden">
+                            <div id="relleno-tutor" class="absolute top-0 left-0 h-full w-0 bg-[#7ddc7a] transition-all duration-700 progress-indeterminate"></div>
                         </div>
                         <p id="estado-tutor" class="font-label-sm text-on-surface-variant mt-stack-sm">Sin muestras (clic para capturar)</p>
                         <input type="hidden" asp-for="HuellaTutorTemplateBase64" />
@@ -228,55 +235,77 @@
 <script>
     const TOKEN = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-    // ================= Enrolamiento simulado (RF3): 3 muestras =================
+    // ================= Enrolamiento real (RF3): el lector captura 4 muestras =================
+    // Un clic dispara el enrolamiento completo en la PC de recepción: el lector pide al
+    // usuario colocar el dedo varias veces y devuelve el template (Base64) al final.
+
+    const MUESTRAS_ENROLAMIENTO = 4;
 
     async function capturar(quien) {
         if (quien === 'tutor' && document.getElementById('tutor-section').classList.contains('hidden')) return;
 
         const ring = document.getElementById(`ring-${quien}`);
+        const estado = document.getElementById(`estado-${quien}`);
+        const barra = document.getElementById(`barra-${quien}`);
+        const relleno = document.getElementById(`relleno-${quien}`);
+        const instruccion = document.getElementById(`instruccion-${quien}`);
+
+        // Reset del estado visual por si es un reintento
+        if (barra) {
+            barra.classList.remove('hidden');
+            relleno.style.width = '0%';
+            relleno.classList.remove('progress-done');
+            relleno.classList.add('progress-indeterminate');
+        }
+        if (instruccion) instruccion.classList.add('hidden');
+
         ring.disabled = true;
         ring.classList.remove('pulse-ring-wait');
         ring.style.borderColor = '#0077ce';
+        estado.textContent = 'El lector capturará 4 muestras. Coloque el dedo cada vez que se le indique...';
 
         try {
-            const resp = await fetch('/Clientes/CapturarMuestra', {
+            const resp = await fetch('/Clientes/Enrolar?muestras=' + MUESTRAS_ENROLAMIENTO, {
                 method: 'POST',
                 headers: { 'RequestVerificationToken': TOKEN }
             });
             const data = await resp.json();
 
-            // Avanza al siguiente paso sin completar
-            for (let i = 1; i <= 3; i++) {
-                const bar = document.querySelector(`[data-step="${quien}-${i}"]`);
-                if (bar.style.width !== '100%') { bar.style.width = '100%'; break; }
+            if (!data.ok) {
+                toast(data.mensaje || 'Error al enrolar la huella.', true);
+                if (barra) { relleno.style.width = '0%'; barra.classList.add('hidden'); }
+                if (instruccion) instruccion.classList.remove('hidden');
+                estado.textContent = 'Esperando huella digital';
+                return;
             }
 
-            const completadas = [...document.querySelectorAll(`[data-step^="${quien}-"]`)]
-                .filter(b => b.style.width === '100%').length;
+            // Captura completada: detiene la animación y llena la barra
+            if (barra) {
+                relleno.classList.remove('progress-indeterminate');
+                relleno.classList.add('progress-done');
+                relleno.style.width = '100%';
+            }
 
             if (quien === 'nino') {
-                document.getElementById('estado-nino').textContent = `Muestras tomadas: ${completadas}/3`;
-                document.getElementById('HuellaNinoTemplateBase64').value = completadas >= 3 ? data.muestraBase64 : '';
+                document.getElementById('HuellaNinoTemplateBase64').value = data.templateBase64;
             } else {
-                document.getElementById('estado-tutor').textContent = `Muestras del tutor: ${completadas}/3`;
-                document.getElementById('HuellaTutorTemplateBase64').value = completadas >= 3 ? data.muestraBase64 : '';
+                document.getElementById('HuellaTutorTemplateBase64').value = data.templateBase64;
             }
 
-            if (completadas >= 3) {
-                ring.style.borderColor = '#268630';
-                ring.style.backgroundColor = '#e6f6ff';
-                ring.querySelector('.material-symbols-outlined').style.color = '#268630';
-                ring.querySelector('.material-symbols-outlined').textContent = 'check_circle';
-            }
+            estado.textContent = 'Huella enrolada correctamente.';
+            ring.style.borderColor = '#268630';
+            ring.style.backgroundColor = '#e6f6ff';
+            const icon = ring.querySelector('.material-symbols-outlined');
+            icon.style.color = '#268630';
+            icon.textContent = 'check_circle';
+            toast('Huella enrolada.', false);
         } catch {
+            if (barra) { relleno.style.width = '0%'; barra.classList.add('hidden'); }
+            if (instruccion) instruccion.classList.remove('hidden');
             toast('Error al comunicarse con el lector biométrico.', true);
+            estado.textContent = 'Esperando huella digital';
         } finally {
             ring.disabled = false;
-            if (![...document.querySelectorAll(`[data-step^="${quien}-"]`)]
-                .every(b => b.style.width === '100%')) {
-                ring.classList.add('pulse-ring-wait');
-                ring.style.borderColor = '#ffda6a';
-            }
         }
     }
 

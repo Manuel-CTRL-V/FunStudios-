@@ -27,23 +27,6 @@
                 </button>
                 <p class="text-body-lg text-on-surface font-bold mt-stack-md">Esperando entrada...</p>
                 <p class="font-label-sm text-label-sm text-on-surface-variant mt-unit">Coloque el dedo del niño en el escáner</p>
-
-                <!-- Controles de simulación (mientras no hay hardware DigitalPersona) -->
-                <div class="w-full mt-stack-lg pt-stack-md border-t border-outline-variant/30 flex flex-col gap-stack-sm">
-                    <label class="font-label-sm uppercase tracking-wider text-on-surface-variant">Modo simulación</label>
-                    <select id="sim-select" class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none">
-                        <option value="">Dedo aleatorio inscrito</option>
-                        @foreach (var c in Model.ClientesParaSimular)
-                        {
-                            <option value="@c.ClienteId">@c.Etiqueta</option>
-                        }
-                        <option value="-1">Dedo desconocido</option>
-                    </select>
-                    <button type="button" onclick="escanear()"
-                            class="w-full h-touch-target bg-primary-container text-on-primary-container font-label-lg rounded-lg hover:bg-surface-tint btn-press transition-all cursor-pointer">
-                        Leer huella
-                    </button>
-                </div>
             </div>
 
             <!-- Estado: escaneando -->
@@ -241,16 +224,16 @@
             </div>
         </div>
 
-        <!-- Estado del lector biométrico -->
+        <!-- Estado del lector biométrico (se actualiza en vivo por polling) -->
         <div class="bg-surface-container-lowest rounded-xl p-gutter shadow-soft flex items-center justify-between">
             <div class="flex items-center gap-stack-md">
-                <span class="material-symbols-outlined @(Model.LectorConectado ? "text-tertiary" : "text-error")">sensors</span>
+                <span id="lector-icono" class="material-symbols-outlined @(Model.LectorConectado ? "text-tertiary" : "text-error")">sensors</span>
                 <div class="leading-tight">
-                    <p class="font-label-lg text-on-surface">Lector biométrico: @Model.LectorNombre</p>
-                    <p class="font-label-sm text-on-surface-variant">Servicio local de biometría (modo simulado — sin dispositivo físico)</p>
+                    <p class="font-label-lg text-on-surface"><span id="lector-nombre">@Model.LectorNombre</span></p>
+                    <p class="font-label-sm text-on-surface-variant">Servicio biométrico en la PC de recepción via red</p>
                 </div>
             </div>
-            <span class="font-label-lg px-3 py-1 rounded-full @(Model.LectorConectado ? "bg-tertiary-container/10 text-tertiary border border-tertiary/20" : "bg-error-container text-on-error-container border border-error/20")">
+            <span id="lector-estado-badge" class="font-label-lg px-3 py-1 rounded-full @(Model.LectorConectado ? "bg-tertiary-container/10 text-tertiary border border-tertiary/20" : "bg-error-container text-on-error-container border border-error/20")">
                 @(Model.LectorConectado ? "Conectado" : "Desconectado")
             </span>
         </div>
@@ -310,21 +293,16 @@
     function resetScanner() { mostrar('scan-idle'); }
 
     async function escanear() {
-        const select = document.getElementById('sim-select').value;
-        const body = {
-            clienteId: select && select !== '-1' ? parseInt(select) : null,
-            dedoDesconocido: select === '-1'
-        };
-
+        // El checkpoint identifica el dedo que se coloca en el lector contra la base
+        // de datos (1:N). No hay modo simulación.
         mostrar('scan-loading');
 
-        // Pequeña pausa para que se perciba la lectura del lector
         setTimeout(async () => {
             try {
-                const data = await postJson('/Acceso/Escanear', body);
+                const data = await postJson('/Acceso/Escanear', {});
                 pintarResultado(data);
             } catch {
-                document.getElementById('result-error-msg').textContent = 'Error al comunicarse con el lector.';
+                document.getElementById('result-error-msg').textContent = 'Error al comunicarse con el lector. Verifique que el servicio biométrico esté activo.';
                 document.getElementById('result-error').classList.remove('hidden');
                 document.getElementById('result-cliente').classList.add('hidden');
                 mostrar('scan-result');
@@ -492,5 +470,38 @@
         document.getElementById('modal-premio').classList.remove('flex');
         location.reload();
     }
+
+    // ================= Estado en vivo del lector (polling) =================
+    // El lector no notifica a la web; aquí se consulta su estado periódicamente
+    // para que la tarjeta se actualice sola cuando se conecta/desconecta u ocupa.
+    function pintarEstadoLector(estado) {
+        const icono = document.getElementById('lector-icono');
+        const nombre = document.getElementById('lector-nombre');
+        const badge = document.getElementById('lector-estado-badge');
+        if (!badge) return;
+
+        const conectado = !!estado.lectorConectado;
+        icono.className = 'material-symbols-outlined ' + (conectado ? 'text-tertiary' : 'text-error');
+        badge.className = 'font-label-lg px-3 py-1 rounded-full ' +
+            (conectado
+                ? 'bg-tertiary-container/10 text-tertiary border border-tertiary/20'
+                : 'bg-error-container text-on-error-container border border-error/20');
+        badge.textContent = conectado ? 'Conectado' : 'Desconectado';
+        if (conectado && estado.nombreDispositivo) nombre.textContent = estado.nombreDispositivo;
+        badge.dataset.ocupado = estado.ocupado ? '1' : '0';
+    }
+
+    async function actualizarEstadoLector() {
+        try {
+            const resp = await fetch('/Dashboard/EstadoLector', {
+                headers: { 'Accept': 'application/json', 'RequestVerificationToken': TOKEN }
+            });
+            if (!resp.ok) return;
+            pintarEstadoLector(await resp.json());
+        } catch { /* lector no disponible: la tarjeta conserva el último estado */ }
+    }
+
+    setInterval(actualizarEstadoLector, 4000);
+    actualizarEstadoLector();
 </script>
 }

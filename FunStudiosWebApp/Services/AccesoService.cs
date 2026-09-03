@@ -25,7 +25,7 @@ public class AccesoService : IAccesoService
         _biometria = biometria;
     }
 
-    public async Task<ResultadoEscaneoViewModel> EscanearAsync(EscanearRequest solicitud, int? usuarioId, string ip)
+    public async Task<ResultadoEscaneoViewModel> EscanearAsync(int? usuarioId, string ip)
     {
         var resultado = new ResultadoEscaneoViewModel();
 
@@ -42,77 +42,48 @@ public class AccesoService : IAccesoService
             .Where(f => f.HuellaTutorTemplate != null)
             .ToListAsync();
 
-        if (clientes.Count == 0 && familiasConTutor.Count == 0)
+        // Construye la lista ordenada de templates para la identificación 1:N,
+        // guardando junto a cada template la resolución del cliente identificado.
+        var candidatos = new List<(string TemplateBase64, Func<Cliente> Resolver)>();
+
+        // Huellas de los niños enrolados
+        foreach (var cliente in clientes)
+        {
+            var clienteId = cliente.ClienteId;
+            candidatos.Add((Convert.ToBase64String(cliente.HuellaNinoTemplate!),
+                () => clientes.First(c => c.ClienteId == clienteId)));
+        }
+
+        // Huellas de los tutores (RF4: niños menores de 2 años)
+        foreach (var familia in familiasConTutor)
+        {
+            candidatos.Add((Convert.ToBase64String(familia.HuellaTutorTemplate!), () =>
+            {
+                // Se resuelve al niño de esa familia que dependa de la huella del tutor,
+                // o al menor si todos tienen huella propia.
+                return familia.Clientes
+                    .OrderBy(c => c.FechaNacimiento)
+                    .FirstOrDefault(c => c.HuellaNinoTemplate == null)
+                    ?? familia.Clientes.OrderBy(c => c.FechaNacimiento).FirstOrDefault()
+                    ?? throw new InvalidOperationException("Ningún cliente de la familia tiene huella enrolada.");
+            }));
+        }
+
+        if (candidatos.Count == 0)
         {
             resultado.Mensaje = "No hay huellas enroladas en el sistema.";
             return resultado;
         }
 
-        // Sin hardware, la "captura" toma el template del niño que se quiere simular,
-        // o uno aleatorio (alguien puso el dedo en el lector).
-        byte[] muestraCapturada;
-
-        Cliente? objetivo = null;
-        if (solicitud.DedoDesconocido || (solicitud.ClienteId == null && clientes.Count == 0))
-        {
-            // Dedo no inscrito o solo hay huellas de tutores
-            if (!solicitud.DedoDesconocido && familiasConTutor.Count > 0)
-            {
-                var familiaAzar = familiasConTutor[Random.Shared.Next(familiasConTutor.Count)];
-                muestraCapturada = familiaAzar.HuellaTutorTemplate!;
-            }
-            else
-            {
-                muestraCapturada = await _biometria.CapturarMuestraAsync();
-            }
-        }
-        else
-        {
-            var idBuscado = solicitud.ClienteId ?? clientes[Random.Shared.Next(clientes.Count)].ClienteId;
-            objetivo = clientes.FirstOrDefault(c => c.ClienteId == idBuscado);
-
-            var familiaObjetivo = familiasConTutor.FirstOrDefault(f => f.Clientes.Any(c => c.ClienteId == idBuscado));
-            if (objetivo?.HuellaNinoTemplate != null)
-            {
-                muestraCapturada = objetivo.HuellaNinoTemplate;
-            }
-            else if (familiaObjetivo != null)
-            {
-                // El niño usa la credencial del tutor (RF4)
-                muestraCapturada = familiaObjetivo.HuellaTutorTemplate!;
-            }
-            else
-            {
-                muestraCapturada = await _biometria.CapturarMuestraAsync();
-            }
-        }
-
-        // ---------- Identificación 1:N (RF5) ----------
+        // Identificación 1:N real: el lector captura el dedo que el usuario coloca y
+        // se compara contra las huellas enroladas en la base (RF5).
         Cliente? identificado = null;
 
-        foreach (var cliente in clientes)
-        {
-            if (await _biometria.VerificarAsync(muestraCapturada, cliente.HuellaNinoTemplate!))
-            {
-                identificado = cliente;
-                break;
-            }
-        }
+        var indice = await _biometria.IdentificarAsync(candidatos.Select(c => c.TemplateBase64).ToList());
 
-        // Si el niño no tiene huella propia, se busca por la credencial del tutor
-        if (identificado == null)
+        if (indice >= 0 && indice < candidatos.Count)
         {
-            foreach (var familia in familiasConTutor)
-            {
-                if (!await _biometria.VerificarAsync(muestraCapturada, familia.HuellaTutorTemplate!)) continue;
-
-                // Se resuelve al niño de esa familia que dependa de la huella del tutor
-                identificado = familia.Clientes
-                    .OrderBy(c => c.FechaNacimiento)
-                    .FirstOrDefault(c => c.HuellaNinoTemplate == null)
-                    ?? familia.Clientes.OrderBy(c => c.FechaNacimiento).FirstOrDefault();
-                break;
-            }
+            identificado = candidatos[indice].Resolver();
         }
 
         if (identificado == null)

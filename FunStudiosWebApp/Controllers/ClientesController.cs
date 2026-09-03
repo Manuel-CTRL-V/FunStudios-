@@ -1,3 +1,4 @@
+using System.Net.Http;
 using FunStudiosWebApp.Services;
 using FunStudiosWebApp.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -104,18 +105,40 @@ public class ClientesController : Controller
         return RedirectToAction("Detalles", new { id });
     }
 
-    // POST: /Clientes/CapturarMuestra
+// POST: /Clientes/Enrolar
     /// <summary>
-    /// Simula la captura de una muestra de huella desde el navegador.
-    /// Cuando exista el servicio local del SDK DigitalPersona (RNF3), este endpoint
-    /// delegar?? en ??l; el resto de la aplicaci??n no cambia.
+    /// Dispara el enrolamiento real en el lector remoto: captura las muestras que el
+    /// usuario coloca en la PC de recepción y devuelve el template (Base64) listo
+    /// para guardar en el cliente/familia. La vista pide colocar el dedo N veces.
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CapturarMuestra()
+    public async Task<IActionResult> Enrolar(int muestras = 4)
     {
-        var muestra = await _biometria.CapturarMuestraAsync();
-        return Json(new { ok = true, muestraBase64 = Convert.ToBase64String(muestra) });
+        try
+        {
+            var templateBase64 = await _biometria.EnrolarAsync(muestras);
+            if (templateBase64 == null)
+            {
+                return Json(new { ok = false, mensaje = "No se pudo enrolar la huella. Verifique el lector y repita." });
+            }
+            return Json(new { ok = true, templateBase64 });
+        }
+        catch (HttpRequestException ex)
+        {
+            var mensaje = ex.StatusCode?.ToString() == "RequestTimeout"
+                ? "No se capturaron las muestras a tiempo. Coloque el dedo en el lector y vuelva a intentar."
+                : "Error al comunicarse con el lector biométrico.";
+            await _biometria.RegistrarEventoAsync("Enrolamiento",
+                $"Error al comunicarse con el lector: {ex.Message}", "Error");
+            return Json(new { ok = false, mensaje });
+        }
+        catch (Exception ex)
+        {
+            await _biometria.RegistrarEventoAsync("Enrolamiento",
+                $"Error al comunicarse con el lector: {ex.Message}", "Error");
+            return Json(new { ok = false, mensaje = "Error al comunicarse con el lector biométrico." });
+        }
     }
 }
 

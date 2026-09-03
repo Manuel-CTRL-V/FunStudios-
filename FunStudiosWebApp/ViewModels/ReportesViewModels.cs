@@ -17,9 +17,6 @@ public class DashboardViewModel
     public bool LectorConectado { get; set; }
 
     public List<MovimientoRecienteViewModel> EscaneosRecientes { get; set; } = new();
-
-    /// <summary>Clientes inscritos para el simulador de escaneo (mientras no hay hardware).</summary>
-    public List<ClienteOpcionViewModel> ClientesParaSimular { get; set; } = new();
 }
 
 /// <summary>Un escaneo reciente para la lista "Escaneos Recientes".</summary>
@@ -33,13 +30,6 @@ public class MovimientoRecienteViewModel
     public string EtiquetaMovimiento { get; set; } = string.Empty;
     public DateTime Hora { get; set; }
     public bool EsEntrada { get; set; }
-}
-
-/// <summary>Opción del selector de simulación de huella.</summary>
-public class ClienteOpcionViewModel
-{
-    public int ClienteId { get; set; }
-    public string Etiqueta { get; set; } = string.Empty;
 }
 
 /// <summary>Pantalla principal de Reportes: bitácora + indicadores BI (RF12, RF13).</summary>

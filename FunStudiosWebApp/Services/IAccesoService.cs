@@ -8,8 +8,8 @@ namespace FunStudiosWebApp.Services;
 /// </summary>
 public interface IAccesoService
 {
-    /// <summary>Identifica al niño por su huella en la puerta (RF5).</summary>
-    Task<ResultadoEscaneoViewModel> EscanearAsync(EscanearRequest solicitud, int? usuarioId, string ip);
+    /// <summary>Identifica al niño por su huella en la puerta, capturando el dedo en el lector (RF5).</summary>
+    Task<ResultadoEscaneoViewModel> EscanearAsync(int? usuarioId, string ip);
 
     /// <summary>Registra la hora de entrada del cliente (RF6) aplicando las reglas de fidelidad.</summary>
     Task<ResultadoRegistroEntradaViewModel> RegistrarEntradaAsync(RegistrarEntradaRequest solicitud, int? usuarioId, string ip);

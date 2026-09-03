@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using FunStudiosWebApp.Models;
 using FunStudiosWebApp.Security;
 
@@ -78,9 +77,6 @@ public static class FunStudiosSeeder
         await context.SaveChangesAsync();
     }
 
-    /// <summary>Genera un template biométrico simulado (en producción llega del SDK DigitalPersona).</summary>
-    private static byte[] TemplateSimulado() => RandomNumberGenerator.GetBytes(64);
-
     private static async Task SembrarFamiliasYClientesAsync(FunStudiosContext context)
     {
         var hoy = DateOnly.FromDateTime(DateTime.Now);
@@ -135,22 +131,22 @@ public static class FunStudiosSeeder
         var clientes = new List<Cliente>
         {
             // Familia Pérez-García: Leo con 7/8 checks (a punto de ganar) y Ana bebé sin enrolar aún
-            new() { ClienteId = 101, FamiliaId = 1, Nombre = "Leo", FechaNacimiento = hoy.AddYears(-6).AddMonths(-3), NotasMedicas = "Alergia al maní.", HuellaNinoTemplate = TemplateSimulado() },
-            new() { ClienteId = 102, FamiliaId = 1, Nombre = "Ana", FechaNacimiento = hoy.AddYears(-1).AddMonths(2), NotasMedicas = null, HuellaNinoTemplate = null },
+            new() { ClienteId = 101, FamiliaId = 1, Nombre = "Leo", FechaNacimiento = hoy.AddYears(-6).AddMonths(-3), NotasMedicas = "Alergia al maní." },
+            new() { ClienteId = 102, FamiliaId = 1, Nombre = "Ana", FechaNacimiento = hoy.AddYears(-1).AddMonths(2), NotasMedicas = null },
 
             // Familia Rodríguez: Sofia con entrada gratis disponible y Mateo recién empezando
-            new() { ClienteId = 201, FamiliaId = 2, Nombre = "Sofía", FechaNacimiento = hoy.AddYears(-8), NotasMedicas = null, HuellaNinoTemplate = TemplateSimulado() },
-            new() { ClienteId = 202, FamiliaId = 2, Nombre = "Mateo", FechaNacimiento = hoy.AddYears(-4).AddDays(120), NotasMedicas = "Usa lentes.", HuellaNinoTemplate = TemplateSimulado() },
+            new() { ClienteId = 201, FamiliaId = 2, Nombre = "Sofía", FechaNacimiento = hoy.AddYears(-8), NotasMedicas = null },
+            new() { ClienteId = 202, FamiliaId = 2, Nombre = "Mateo", FechaNacimiento = hoy.AddYears(-4).AddDays(120), NotasMedicas = "Usa lentes." },
 
             // Familia Thompson-López: Emma con membresía activa
-            new() { ClienteId = 301, FamiliaId = 3, Nombre = "Emma", FechaNacimiento = hoy.AddYears(-7).AddMonths(6), NotasMedicas = null, HuellaNinoTemplate = TemplateSimulado() },
+            new() { ClienteId = 301, FamiliaId = 3, Nombre = "Emma", FechaNacimiento = hoy.AddYears(-7).AddMonths(6), NotasMedicas = null },
 
             // Familia Kim Herrera: Daniel inactivo (no viene desde hace meses)
-            new() { ClienteId = 401, FamiliaId = 4, Nombre = "Daniel", FechaNacimiento = hoy.AddYears(-9).AddMonths(1), NotasMedicas = "Asma. Inhalador en mochila roja.", HuellaNinoTemplate = TemplateSimulado() },
+            new() { ClienteId = 401, FamiliaId = 4, Nombre = "Daniel", FechaNacimiento = hoy.AddYears(-9).AddMonths(1), NotasMedicas = "Asma. Inhalador en mochila roja." },
 
             // Familia Gómez Ruiz: Valentina y Sebastián, clientes frecuentes
-            new() { ClienteId = 501, FamiliaId = 5, Nombre = "Valentina", FechaNacimiento = hoy.AddYears(-5).AddMonths(8), NotasMedicas = null, HuellaNinoTemplate = TemplateSimulado() },
-            new() { ClienteId = 502, FamiliaId = 5, Nombre = "Sebastián", FechaNacimiento = hoy.AddYears(-3).AddMonths(4), NotasMedicas = null, HuellaNinoTemplate = TemplateSimulado() }
+            new() { ClienteId = 501, FamiliaId = 5, Nombre = "Valentina", FechaNacimiento = hoy.AddYears(-5).AddMonths(8), NotasMedicas = null },
+            new() { ClienteId = 502, FamiliaId = 5, Nombre = "Sebastián", FechaNacimiento = hoy.AddYears(-3).AddMonths(4), NotasMedicas = null }
         };
 
         context.Clientes.AddRange(clientes);

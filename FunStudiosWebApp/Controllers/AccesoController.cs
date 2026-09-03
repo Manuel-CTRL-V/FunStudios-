@@ -1,3 +1,4 @@
+using System.Net.Http;
 using FunStudiosWebApp.Services;
 using FunStudiosWebApp.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -26,12 +27,28 @@ public class AccesoController : Controller
     // POST: /Acceso/Escanear
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Escanear([FromBody] EscanearRequest solicitud)
+    public async Task<IActionResult> Escanear()
     {
-        var resultado = await _accesoService.EscanearAsync(solicitud ?? new EscanearRequest(),
-            UsuarioId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
+        try
+        {
+            var resultado = await _accesoService.EscanearAsync(
+                UsuarioId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
 
-        return Json(resultado);
+            return Json(resultado);
+        }
+        catch (HttpRequestException ex)
+        {
+            // El lector no respondió a tiempo (408) o la API no está disponible.
+            // Se presenta un mensaje claro en lugar de un 500 genérico.
+            var status = ex.StatusCode?.ToString();
+            var mensaje = status switch
+            {
+                "RequestTimeout" => "No se capturó la huella a tiempo. Coloque el dedo en el lector y vuelva a intentar.",
+                _ => "El servicio biométrico no está disponible. Verifique que esté activo en la PC de recepción."
+            };
+
+            return Json(new ResultadoEscaneoViewModel { Encontrado = false, Mensaje = mensaje });
+        }
     }
 
     // POST: /Acceso/RegistrarEntrada

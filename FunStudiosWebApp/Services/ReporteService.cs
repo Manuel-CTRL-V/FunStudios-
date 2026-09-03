@@ -39,14 +39,8 @@ public class ReporteService : IReporteService
 
         var escaneosRecientes = await ObtenerMovimientosRecientesAsync(6);
 
-        var clientesParaSimular = await _context.Clientes
-            .OrderBy(c => c.Nombre)
-            .Select(c => new ClienteOpcionViewModel
-            {
-                ClienteId = c.ClienteId,
-                Etiqueta = c.Nombre + " (" + c.Familia!.ApellidosFamilia + ")"
-            })
-            .ToListAsync();
+        // Estado del lector consultado en vivo (captura real del dispositivo remoto).
+        var estado = await _biometria.EstadoAsync();
 
         return new DashboardViewModel
         {
@@ -55,10 +49,9 @@ public class ReporteService : IReporteService
             IngresosDayPassHoy = ingresosDayPassHoy,
             GratisCanjeadasTotal = gratisCanjeadas,
             GratisDisponiblesSaldo = gratisSaldo,
-            LectorNombre = _biometria.NombreDispositivo,
-            LectorConectado = _biometria.LectorConectado,
-            EscaneosRecientes = escaneosRecientes,
-            ClientesParaSimular = clientesParaSimular
+            LectorNombre = estado.NombreDispositivo,
+            LectorConectado = estado.LectorConectado,
+            EscaneosRecientes = escaneosRecientes
         };
     }
 

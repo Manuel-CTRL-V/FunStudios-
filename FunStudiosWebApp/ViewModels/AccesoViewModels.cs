@@ -93,13 +93,3 @@ public class ResultadoRegistroEntradaViewModel
     public string? NombreCliente { get; set; }
     public byte ConteoChecks { get; set; }
 }
-
-/// <summary>Solicitud de simulación de escaneo desde la UI.</summary>
-public class EscanearRequest
-{
-    /// <summary>Null = entra un niño inscrito aleatorio. Con valor = ese niño específico.</summary>
-    public int? ClienteId { get; set; }
-
-    /// <summary>Fuerza un resultado negativo para probar huella no reconocida.</summary>
-    public bool DedoDesconocido { get; set; }
-}

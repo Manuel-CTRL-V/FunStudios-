@@ -28,7 +28,17 @@ builder.Services.AddDbContext<FunStudiosContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("FunStudiosDb")));
 
 // Servicios de negocio
-builder.Services.AddScoped<IBiometriaService, SimuladorBiometriaService>();
+// El lector biométrico vive en la PC de recepción; la web lo consume por red
+// mediante la API local de BiometricService (config BiometriaApi:BaseUrl).
+builder.Services.AddHttpClient<ApiBiometriaService>(client =>
+{
+    var baseUrl = builder.Configuration["BiometriaApi:BaseUrl"] ?? "http://localhost:5050";
+    var timeout = builder.Configuration.GetValue<int>("BiometriaApi:TimeoutSegundos", 90);
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(timeout);
+});
+builder.Services.AddScoped<IBiometriaService>(sp => sp.GetRequiredService<ApiBiometriaService>());
+
 builder.Services.AddScoped<IAccesoService, AccesoService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
