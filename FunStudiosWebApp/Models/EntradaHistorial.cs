@@ -27,13 +27,20 @@ public class EntradaHistorial
     public int? VentaId { get; set; }
 
     /// <summary>
-    /// Tutor responsable que acompañó al niño en esta entrada (RF6).
-    /// Se guarda una "foto" del nombre y teléfono al momento de registrar la entrada:
-    /// puede ser el tutor 1, el tutor 2 o un acompañante no registrado.
+    /// Tutor(es) responsable(s) que acompañaron al niño en esta entrada (RF6).
+    /// Se guarda una "foto" al momento de registrar la entrada: nombres separados
+    /// por comas de los tutores seleccionados (+ un acompañante no registrado si lo hubo).
     /// </summary>
     public string? TutorNombre { get; set; }
 
+    /// <summary>Teléfono del primer tutor seleccionado o del acompañante no registrado.</summary>
     public string? TutorTelefono { get; set; }
+
+    /// <summary>
+    /// Cantidad total de acompañantes que ingresaron con el niño (incluye los tutores
+    /// seleccionados). Se usa para el control de acompañantes en la bitácora de entradas.
+    /// </summary>
+    public int Acompanantes { get; set; }
 
     // Propiedades calculadas
 

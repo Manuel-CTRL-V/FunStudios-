@@ -134,13 +134,19 @@ else
                 <a asp-controller="Dashboard" asp-action="Index"
                    class="flex items-center gap-stack-md px-gutter py-touch-target rounded-lg mx-stack-md transition-all btn-press @(controladorActual == "Dashboard" ? "bg-primary-container text-on-primary-container" : "text-on-surface-variant hover:bg-surface-variant")">
                     <span class="material-symbols-outlined">dashboard</span>
-                    <span class="font-label-lg">Panel de Control</span>
+                    <span class="font-label-lg text-[17px]">Panel de Control</span>
                 </a>
 
                 <a asp-controller="Clientes" asp-action="Index"
                    class="flex items-center gap-stack-md px-gutter py-touch-target rounded-lg mx-stack-md transition-all btn-press @(controladorActual == "Clientes" ? "bg-primary-container text-on-primary-container" : "text-on-surface-variant hover:bg-surface-variant")">
                     <span class="material-symbols-outlined">fingerprint</span>
-                    <span class="font-label-lg">Clientes</span>
+                    <span class="font-label-lg text-[17px]">Clientes</span>
+                </a>
+
+                <a asp-controller="Familias" asp-action="Index"
+                   class="flex items-center gap-stack-md px-gutter py-touch-target rounded-lg mx-stack-md transition-all btn-press @(controladorActual == "Familias" ? "bg-primary-container text-on-primary-container" : "text-on-surface-variant hover:bg-surface-variant")">
+                    <span class="material-symbols-outlined">family_restroom</span>
+                    <span class="font-label-lg text-[17px]">Familias</span>
                 </a>
 
                 <div class="mx-stack-md">
@@ -148,25 +154,25 @@ else
                             class="w-full flex items-center justify-between gap-stack-md px-gutter py-touch-target rounded-lg transition-all @(controladorActual == "Reportes" ? "bg-primary-container text-on-primary-container" : "text-on-surface-variant hover:bg-surface-variant")">
                         <span class="flex items-center gap-stack-md">
                             <span class="material-symbols-outlined">bar_chart</span>
-                            <span class="font-label-lg">Reportes</span>
+                            <span class="font-label-lg text-[17px]">Reportes</span>
                         </span>
                         <span class="material-symbols-outlined transition-transform @(controladorActual == "Reportes" ? "rotate-90" : "")">chevron_right</span>
                     </button>
                     <div id="menu-reportes" class="hidden flex-col gap-1 mt-stack-sm pl-stack-md">
                         <a asp-controller="Reportes" asp-action="Bitacora"
-                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-label-lg @(controladorActual == "Reportes" && accionActual == "Bitacora" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
+                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-[16px] @(controladorActual == "Reportes" && accionActual == "Bitacora" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
                             <span class="material-symbols-outlined text-[18px]">history</span> Bitácora de Entradas
                         </a>
                         <a asp-controller="Reportes" asp-action="Ventas"
-                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-label-lg @(controladorActual == "Reportes" && accionActual == "Ventas" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
+                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-[16px] @(controladorActual == "Reportes" && accionActual == "Ventas" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
                             <span class="material-symbols-outlined text-[18px]">receipt_long</span> Ventas y Facturas
                         </a>
                         <a asp-controller="Reportes" asp-action="InteligenciaNegocio"
-                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-label-lg @(controladorActual == "Reportes" && accionActual == "InteligenciaNegocio" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
+                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-[16px] @(controladorActual == "Reportes" && accionActual == "InteligenciaNegocio" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
                             <span class="material-symbols-outlined text-[18px]">insights</span> Inteligencia de Negocio
                         </a>
                         <a asp-controller="Reportes" asp-action="LogsBiometrico"
-                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-label-lg @(controladorActual == "Reportes" && accionActual == "LogsBiometrico" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
+                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-[16px] @(controladorActual == "Reportes" && accionActual == "LogsBiometrico" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
                             <span class="material-symbols-outlined text-[18px]">bug_report</span> Logs Biométricos
                         </a>
                     </div>
@@ -177,7 +183,7 @@ else
                     <a asp-controller="Usuarios" asp-action="Index"
                        class="flex items-center gap-stack-md px-gutter py-touch-target rounded-lg mx-stack-md transition-all btn-press @(controladorActual == "Usuarios" ? "bg-primary-container text-on-primary-container" : "text-on-surface-variant hover:bg-surface-variant")">
                         <span class="material-symbols-outlined">group</span>
-                        <span class="font-label-lg">Usuarios</span>
+                        <span class="font-label-lg text-[17px]">Usuarios</span>
                     </a>
                 }
             </div>
@@ -206,6 +212,14 @@ else
                 <h1 class="text-headline-md font-extrabold text-primary">FunStudios</h1>
 
                 <div class="flex items-center gap-stack-md">
+                    @if (esAdmin)
+                    {
+                        <a asp-controller="Configuracion" asp-action="Index"
+                           class="w-10 h-10 rounded-full border-2 border-primary-container bg-surface-container-lowest text-primary flex items-center justify-center hover:bg-surface-variant transition-colors"
+                           title="Configuración">
+                            <span class="material-symbols-outlined">settings</span>
+                        </a>
+                    }
                     <div class="w-10 h-10 rounded-full border-2 border-primary-container bg-primary-container text-on-primary-container flex items-center justify-center font-bold" title="@User.Identity.Name">
                         @iniciales
                     </div>

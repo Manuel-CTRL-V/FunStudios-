@@ -1,0 +1,178 @@
+@model FamiliaDetalleViewModel
+@{
+    ViewData["Title"] = $"Familia {Model.ApellidosFamilia}";
+}
+
+<!-- Encabezado -->
+<div class="flex flex-col sm:flex-row justify-between sm:items-center gap-stack-md mb-stack-lg">
+    <div class="flex items-center gap-stack-md">
+        <div class="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-[32px]">family_restroom</span>
+        </div>
+        <div>
+            <h2 class="text-headline-lg text-on-background leading-tight">Familia @Model.ApellidosFamilia</h2>
+            <p class="text-body-md text-on-surface-variant">
+                @(Model.CodigoFamilia ?? "Sin código")
+                · @Model.Tutores.Count @(Model.Tutores.Count == 1 ? "tutor" : "tutores")
+                @if (Model.HuellaTutorEnrolada)
+                {
+                    <text>· Huella del tutor: @(Model.TutorConHuellaNombre ?? "enrolada") ✓</text>
+                }
+            </p>
+        </div>
+    </div>
+    <a asp-controller="Familias" asp-action="Index"
+       class="flex items-center gap-2 px-6 py-2 bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors shadow-soft">
+        <span class="material-symbols-outlined">arrow_back</span> Volver a Familias
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+    <!-- Columna: tutores -->
+    <div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-surface-variant/30">
+        <div class="flex items-center gap-2 mb-stack-md">
+            <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-primary-container text-sm">group</span>
+            </div>
+            <h3 class="text-headline-sm text-on-surface">Tutores</h3>
+        </div>
+
+        <ul class="flex flex-col gap-stack-sm mb-gutter">
+            @foreach (var t in Model.Tutores)
+            {
+                <li class="border border-surface-variant/40 rounded-lg p-stack-md">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary shrink-0">person</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-on-surface truncate">@t.Nombre</p>
+                            <p class="text-body-sm text-on-surface-variant">@t.Telefono</p>
+                        </div>
+                        @if (t.EsPrincipal)
+                        {
+                            <span class="font-label-sm text-primary bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap">principal</span>
+                        }
+                        @if (t.HuellaEnrolada)
+                        {
+                            <span class="font-label-sm text-secondary bg-secondary-fixed-dim/30 px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1"
+                                  title="Huella registrada para el ingreso de menores de 2 años (RF4)">
+                                <span class="material-symbols-outlined text-[14px]">fingerprint</span> huella ✓
+                            </span>
+                        }
+                        <details class="relative">
+                            <summary class="inline-flex p-2 text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer list-none" title="Editar tutor">
+                                <span class="material-symbols-outlined">edit</span>
+                            </summary>
+                            <div class="absolute right-0 z-20 mt-2 w-72 bg-surface-container-lowest rounded-xl border border-surface-variant/40 shadow-soft p-stack-md">
+                                <form asp-controller="Familias" asp-action="ActualizarTutor" method="post" class="flex flex-col gap-stack-sm">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="tutorId" value="@t.TutorId" />
+                                    <input type="hidden" name="familiaId" value="@Model.FamiliaId" />
+                                    <input name="nombre" value="@t.Nombre" required placeholder="Nombre"
+                                           class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-2 px-4 h-[44px] focus:outline-none" />
+                                    <input name="telefono" value="@t.Telefono" required placeholder="Teléfono" type="tel" inputmode="numeric" maxlength="12"
+                                           oninput="formatTelefono(this)"
+                                           class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-2 px-4 h-[44px] focus:outline-none" />
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" name="esPrincipal" value="true" @(t.EsPrincipal ? "checked" : "") class="accent-[#0077ce]" />
+                                        <span class="font-label-lg text-on-surface">Es el tutor principal</span>
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <button type="submit" class="flex-1 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all cursor-pointer">Guardar</button>
+                                        <button type="button" onclick="this.closest('details').removeAttribute('open')"
+                                                class="flex-1 py-2 bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors cursor-pointer">Cancelar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </details>
+                        <form asp-controller="Familias" asp-action="EliminarTutor" method="post"
+                              onsubmit="return confirm('¿Eliminar al tutor @t.Nombre (@t.Telefono)?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="tutorId" value="@t.TutorId" />
+                            <input type="hidden" name="familiaId" value="@Model.FamiliaId" />
+                            <button type="submit" class="inline-flex p-2 text-[#b3261e] hover:bg-[#b3261e]/10 rounded-full transition-colors cursor-pointer" title="Eliminar tutor">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </form>
+                    </div>
+                </li>
+            }
+            @if (!Model.Tutores.Any())
+            {
+                <li class="text-center text-on-surface-variant py-stack-md border border-dashed border-surface-variant/50 rounded-lg">Sin tutores registrados.</li>
+            }
+        </ul>
+
+        <!-- Agregar tutor -->
+        <form asp-controller="Familias" asp-action="AgregarTutor" method="post"
+              class="flex flex-col gap-stack-sm pt-stack-md border-t border-surface-variant/40">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="familiaId" value="@Model.FamiliaId" />
+            <p class="font-label-sm text-on-surface-variant ml-2">Agregar tutor</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-sm">
+                <input name="nombre" required placeholder="Nombre del tutor"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-2 px-4 h-[44px] focus:outline-none" />
+                <input name="telefono" required placeholder="Teléfono" type="tel" inputmode="numeric" maxlength="12" oninput="formatTelefono(this)"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-2 px-4 h-[44px] focus:outline-none" />
+            </div>
+            <button type="submit"
+                    class="flex items-center gap-2 justify-center w-full py-2 bg-secondary text-on-secondary font-label-lg rounded-full hover:bg-secondary-container btn-press transition-all cursor-pointer">
+                <span class="material-symbols-outlined">person_add</span> Agregar tutor
+            </button>
+        </form>
+        <p class="font-label-sm text-on-surface-variant mt-unit ml-2">El primer tutor de la familia queda como principal.</p>
+    </div>
+
+    <!-- Columna: niños -->
+    <div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-surface-variant/30">
+        <div class="flex items-center gap-2 mb-stack-md">
+            <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-primary-container text-sm">child_care</span>
+            </div>
+            <h3 class="text-headline-sm text-on-surface">Niños de la familia</h3>
+        </div>
+
+        <div class="flex flex-col gap-stack-sm">
+            @foreach (var h in Model.Hijos)
+            {
+                <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@h.ClienteId"
+                   class="flex items-center gap-4 border border-surface-variant/40 hover:border-primary/60 rounded-lg p-stack-md transition-colors group">
+                    <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">@h.Inicial</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-on-surface group-hover:text-primary truncate">@h.Nombre (@h.Edad años)</p>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            <span class="material-symbols-outlined text-[16px] @(h.HuellaEnrolada ? "text-secondary" : "text-outline-variant")" title="Huella niño">fingerprint</span>
+                            @if (h.EstaDentro)
+                            {
+                                <span class="font-label-sm text-tertiary bg-tertiary-container/10 px-2 py-0.5 rounded-full border border-tertiary/20">Dentro del parque</span>
+                            }
+                            <span class="font-label-sm text-on-surface-variant">@h.ConteoChecks/@h.ChecksParaPremio checks</span>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">chevron_right</span>
+                </a>
+            }
+            @if (!Model.Hijos.Any())
+            {
+                <p class="text-center text-on-surface-variant py-stack-md border border-dashed border-surface-variant/50 rounded-lg">Sin niños registrados.</p>
+            }
+        </div>
+
+        <div class="pt-stack-md mt-stack-md border-t border-surface-variant/40">
+            <a asp-controller="Clientes" asp-action="Crear" asp-route-familiaId="@Model.FamiliaId"
+               class="flex items-center gap-2 justify-center w-full py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all cursor-pointer">
+                <span class="material-symbols-outlined">person_add</span> Agregar niño a esta familia
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function formatTelefono(el) {
+        let v = el.value.replace(/\D/g, '').substring(0, 10);
+        if (v.length > 6) v = v.substring(0, 3) + '-' + v.substring(3, 6) + '-' + v.substring(6);
+        else if (v.length > 3) v = v.substring(0, 3) + '-' + v.substring(3);
+        el.value = v;
+    }
+</script>
+}

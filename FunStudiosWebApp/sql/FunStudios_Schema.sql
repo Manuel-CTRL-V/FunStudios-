@@ -59,20 +59,38 @@ GO
 -- 3. FAMILIAS
 -- =============================================
 CREATE TABLE Familias (
-    FamiliaId        INT            NOT NULL IDENTITY(1,1),
-    ApellidosFamilia NVARCHAR(150)  NOT NULL,
-    NombreTutor1     NVARCHAR(100)  NULL,
-    TelefonoTutor1   NVARCHAR(20)   NOT NULL,
-    NombreTutor2     NVARCHAR(100)  NULL,
-    TelefonoTutor2   NVARCHAR(20)   NULL,
-    HuellaTutorTemplate VARBINARY(MAX) NULL,
+    FamiliaId          INT             NOT NULL IDENTITY(1,1),
+    ApellidosFamilia   NVARCHAR(150)   NOT NULL,
+    CodigoFamilia      NVARCHAR(20)    NULL,
 
-    CONSTRAINT PK_Familias PRIMARY KEY (FamiliaId)
+    CONSTRAINT PK_Familias PRIMARY KEY (FamiliaId),
+    CONSTRAINT UQ_Familias_CodigoFamilia UNIQUE (CodigoFamilia)
 );
 GO
 
 -- =============================================
--- 4. CLIENTES
+-- 4. TUTORES (uno por familia es EsPrincipal = 1)
+-- =============================================
+CREATE TABLE Tutores (
+    TutorId       INT            NOT NULL IDENTITY(1,1),
+    FamiliaId     INT            NOT NULL,
+    Nombre        NVARCHAR(100)  NOT NULL,
+    Telefono      NVARCHAR(20)   NOT NULL,
+    EsPrincipal   BIT            NOT NULL DEFAULT 0,
+    HuellaTemplate VARBINARY(MAX) NULL,
+
+    CONSTRAINT PK_Tutores PRIMARY KEY (TutorId),
+    CONSTRAINT FK_Tutores_Familias FOREIGN KEY (FamiliaId)
+        REFERENCES Familias(FamiliaId) ON DELETE CASCADE
+);
+GO
+
+CREATE NONCLUSTERED INDEX IX_Tutores_FamiliaId
+    ON Tutores(FamiliaId);
+GO
+
+-- =============================================
+-- 5. CLIENTES
 -- =============================================
 CREATE TABLE Clientes (
     ClienteId          INT            NOT NULL IDENTITY(1,1),
@@ -93,7 +111,7 @@ CREATE NONCLUSTERED INDEX IX_Clientes_FamiliaId
 GO
 
 -- =============================================
--- 5. TIPO_ACCESO
+-- 6. TIPO_ACCESO
 -- =============================================
 CREATE TABLE TiposAcceso (
     TipoAccesoId  INT           NOT NULL IDENTITY(1,1),
@@ -104,7 +122,7 @@ CREATE TABLE TiposAcceso (
 GO
 
 -- =============================================
--- 6. METODOS_PAGO
+-- 7. METODOS_PAGO
 -- =============================================
 CREATE TABLE MetodosPago (
     MetodoPagoId  INT           NOT NULL IDENTITY(1,1),
@@ -115,7 +133,7 @@ CREATE TABLE MetodosPago (
 GO
 
 -- =============================================
--- 7. MEMBRESIAS
+-- 8. MEMBRESIAS
 -- =============================================
 CREATE TABLE Membresias (
     MembresiaId      INT            NOT NULL IDENTITY(1,1),
@@ -139,7 +157,7 @@ CREATE NONCLUSTERED INDEX IX_Membresias_ClienteId
 GO
 
 -- =============================================
--- 8. VENTAS
+-- 9. VENTAS
 -- =============================================
 CREATE TABLE Ventas (
     VentaId       INT            NOT NULL IDENTITY(1,1),
@@ -166,7 +184,7 @@ CREATE NONCLUSTERED INDEX IX_Ventas_MetodoPagoId
 GO
 
 -- =============================================
--- 9. FIDELIDAD_CUENTAS (1 a 1 con Cliente)
+-- 10. FIDELIDAD_CUENTAS (1 a 1 con Cliente)
 -- =============================================
 CREATE TABLE FidelidadCuentas (
     FidelidadId              INT       NOT NULL IDENTITY(1,1),
@@ -183,7 +201,7 @@ CREATE TABLE FidelidadCuentas (
 GO
 
 -- =============================================
--- 10. ENTRADAS_HISTORIAL
+-- 11. ENTRADAS_HISTORIAL
 -- =============================================
 CREATE TABLE EntradasHistorial (
     EntradaId         INT        NOT NULL IDENTITY(1,1),
@@ -194,8 +212,9 @@ CREATE TABLE EntradasHistorial (
     TipoAccesoId      INT        NOT NULL,
     MembresiaId       INT        NULL,
     VentaId           INT        NULL,
-    TutorNombre       NVARCHAR(150) NULL,
+    TutorNombre       NVARCHAR(300) NULL,
     TutorTelefono     NVARCHAR(20)  NULL,
+    Acompanantes      INT           NOT NULL DEFAULT 1,
 
     CONSTRAINT PK_EntradasHistorial PRIMARY KEY (EntradaId),
     CONSTRAINT FK_EntradasHistorial_Familias FOREIGN KEY (FamiliaId)
@@ -232,7 +251,7 @@ CREATE NONCLUSTERED INDEX IX_EntradasHistorial_MembresiaId
 GO
 
 -- =============================================
--- 11. LOGS_BIOMETRICO
+-- 12. LOGS_BIOMETRICO
 -- =============================================
 CREATE TABLE LogsBiometrico (
     LogId              INT            NOT NULL IDENTITY(1,1),

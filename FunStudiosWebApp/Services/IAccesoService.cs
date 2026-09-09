@@ -15,5 +15,5 @@ public interface IAccesoService
     Task<ResultadoRegistroEntradaViewModel> RegistrarEntradaAsync(RegistrarEntradaRequest solicitud, int? usuarioId, string ip);
 
     /// <summary>Registra la hora de salida del cliente (RF7).</summary>
-    Task<ResultadoRegistroEntradaViewModel> RegistrarSalidaAsync(int clienteId, string ip);
+    Task<ResultadoRegistroEntradaViewModel> RegistrarSalidaAsync(int clienteId, string ip, int? usuarioId = null);
 }

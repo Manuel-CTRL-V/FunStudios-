@@ -1,5 +1,18 @@
 namespace FunStudiosWebApp.ViewModels;
 
+/// <summary>Lista de nacionalidades para el desplegable del formulario (default Dominicana).</summary>
+public static class Nacionalidades
+{
+    public const string Default = "Dominicana";
+
+    public static readonly string[] Todas =
+    {
+        "Dominicana", "Haitiana", "Venezolana", "Colombiana", "Panameña",
+        "Puertorriqueña", "Estadounidense", "Mexicana", "Española", "Italiana",
+        "Francesa", "Alemana", "Argentina", "Chilena", "China", "Otro"
+    };
+}
+
 /// <summary>Fila de la tabla "Gestión de Clientes".</summary>
 public class ClienteListadoItemViewModel
 {
@@ -8,10 +21,13 @@ public class ClienteListadoItemViewModel
     public string Inicial { get; set; } = "?";
     public int Edad { get; set; }
     public string ApellidosFamilia { get; set; } = string.Empty;
+    public string? CodigoFamilia { get; set; }
+    public string? Nacionalidad { get; set; }
     public bool TieneNotaMedica { get; set; }
 
     // Fidelidad (RF8)
     public byte ConteoChecks { get; set; }
+    public int ChecksParaPremio { get; set; } = 8;
     public int EntradasGratisDisponibles { get; set; }
 
     /// <summary>Estado mostrado en la tabla: Activo (dentro del parque) / Fuera.</summary>
@@ -30,19 +46,19 @@ public class ClienteDetalleViewModel
     public DateOnly FechaNacimiento { get; set; }
     public int Edad { get; set; }
     public string? NotasMedicas { get; set; }
+    public string? Nacionalidad { get; set; }
     public bool HuellaEnrolada { get; set; }
     public bool HuellaTutorEnrolada { get; set; }
 
     // Familia
     public int FamiliaId { get; set; }
     public string ApellidosFamilia { get; set; } = string.Empty;
-    public string? NombreTutor1 { get; set; }
-    public string TelefonoTutor1 { get; set; } = string.Empty;
-    public string? NombreTutor2 { get; set; }
-    public string? TelefonoTutor2 { get; set; }
+    public string? CodigoFamilia { get; set; }
+    public List<TutorViewModel> Tutores { get; set; } = new();
 
     // Fidelidad
     public byte ConteoChecks { get; set; }
+    public int ChecksParaPremio { get; set; } = 8;
     public int EntradasGratisDisponibles { get; set; }
     public DateTime? FechaUltimaActualizacionFidelidad { get; set; }
 
@@ -68,6 +84,9 @@ public class EntradaItemViewModel
     public string? TutorNombre { get; set; }
     public string? TutorTelefono { get; set; }
     public decimal? MontoVenta { get; set; }
+
+    /// <summary>Cantidad de acompañantes con los que ingresó el niño (incluye tutores).</summary>
+    public int Acompanantes { get; set; }
 
     public bool EstaDentro => FechaHoraSalida == null;
 
@@ -138,6 +157,7 @@ public class ClienteCrearViewModel
     public string Nombre { get; set; } = string.Empty;
     public DateOnly? FechaNacimiento { get; set; }
     public string? NotasMedicas { get; set; }
+    public string? Nacionalidad { get; set; }
 
     // Enrolamiento biométrico
 
@@ -146,25 +166,72 @@ public class ClienteCrearViewModel
     public string? HuellaTutorTemplateBase64 { get; set; }
 }
 
-/// <summary>Formulario de edición de datos básicos del cliente y su familia.</summary>
+/// <summary>Formulario de edición de datos básicos del cliente (los tutores se editan en el perfil de familia).</summary>
 public class ClienteEditarViewModel
 {
     public int ClienteId { get; set; }
     public string Nombre { get; set; } = string.Empty;
     public DateOnly? FechaNacimiento { get; set; }
     public string? NotasMedicas { get; set; }
-    // Tutor 1
-    public string? NombreTutor1 { get; set; }
-    public string TelefonoTutor1 { get; set; } = string.Empty;
-
-    // Tutor 2 (opcional)
-    public string? NombreTutor2 { get; set; }
-    public string? TelefonoTutor2 { get; set; }
+    public string? Nacionalidad { get; set; }
+    public int FamiliaId { get; set; }
 }
 
-/// <summary>Opción para el dropdown "familia existente" del formulario.</summary>
+/// <summary>Opción para el selector de "familia existente" del formulario de registro.</summary>
 public class FamiliaOpcionViewModel
 {
     public int FamiliaId { get; set; }
     public string Etiqueta { get; set; } = string.Empty;
+    public string ApellidosFamilia { get; set; } = string.Empty;
+    public string? CodigoFamilia { get; set; }
+}
+
+/// <summary>Un tutor de la familia (para checkpoint, perfiles y gestión de tutores).</summary>
+public class TutorViewModel
+{
+    public int TutorId { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string Telefono { get; set; } = string.Empty;
+    public bool EsPrincipal { get; set; }
+    public bool HuellaEnrolada { get; set; }
+}
+
+/// <summary>Tarjeta del listado de familias (apartado Familias).</summary>
+public class FamiliaListadoItemViewModel
+{
+    public int FamiliaId { get; set; }
+    public string ApellidosFamilia { get; set; } = string.Empty;
+    public string? CodigoFamilia { get; set; }
+    public int CantidadTutores { get; set; }
+    public string TutoresTexto { get; set; } = string.Empty;
+    public int CantidadNinos { get; set; }
+    public int NinosDentro { get; set; }
+    public bool HuellaTutorEnrolada { get; set; }
+    public string? TutorConHuellaNombre { get; set; }
+}
+
+/// <summary>Perfil completo de una familia (apartado Familias).</summary>
+public class FamiliaDetalleViewModel
+{
+    public int FamiliaId { get; set; }
+    public string ApellidosFamilia { get; set; } = string.Empty;
+    public string? CodigoFamilia { get; set; }
+    public bool HuellaTutorEnrolada { get; set; }
+    public string? TutorConHuellaNombre { get; set; }
+    public bool TieneTutorPrincipal { get; set; }
+    public List<TutorViewModel> Tutores { get; set; } = new();
+    public List<HijoFamiliaItemViewModel> Hijos { get; set; } = new();
+}
+
+/// <summary>Niño asociado a una familia, para el perfil familiar.</summary>
+public class HijoFamiliaItemViewModel
+{
+    public int ClienteId { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string Inicial { get; set; } = "?";
+    public int Edad { get; set; }
+    public bool HuellaEnrolada { get; set; }
+    public bool EstaDentro { get; set; }
+    public byte ConteoChecks { get; set; }
+    public int ChecksParaPremio { get; set; } = 8;
 }

@@ -1,0 +1,50 @@
+@model ParametroEditarViewModel
+@{
+    ViewData["Title"] = $"Parámetro · {Model.NombreVisible ?? Model.Clave}";
+}
+
+<div class="max-w-3xl mx-auto">
+    <div class="mb-stack-lg">
+        <h2 class="text-headline-lg text-on-background">Editar Parámetro</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">@Model.Descripcion</p>
+    </div>
+
+    <form asp-controller="Configuracion" asp-action="EditarParametro" asp-route-id="@Model.ParametroId" method="post"
+          class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft flex flex-col gap-gutter">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ParametroId" />
+        <input type="hidden" asp-for="Clave" />
+        <input type="hidden" asp-for="Tipo" />
+        <input type="hidden" asp-for="NombreVisible" />
+        <input type="hidden" asp-for="Descripcion" />
+
+        <div class="flex flex-col gap-1">
+            <label asp-for="Clave" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Clave</label>
+            <input asp-for="Clave" disabled
+                   class="w-full bg-surface-container/50 border-2 border-transparent rounded-full py-3 px-4 h-[48px] opacity-60" />
+        </div>
+
+        <div class="flex flex-col gap-1">
+            <label asp-for="Valor" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Valor (@Model.Tipo)</label>
+            <input asp-for="Valor" type="@(Model.Tipo == "bool" ? "text" : Model.Tipo == "numero" ? "number" : Model.Tipo == "decimal" ? "number" : "text")"
+                   step="@(Model.Tipo == "decimal" ? "0.01" : null)"
+                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+            <span asp-validation-for="Valor" class="font-label-sm text-error ml-4"></span>
+        </div>
+
+        <div class="flex justify-end gap-stack-md mt-stack-md">
+            <a asp-controller="Configuracion" asp-action="Index"
+               class="flex items-center justify-center px-gutter h-touch-target bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="flex items-center gap-2 bg-primary hover:bg-surface-tint text-on-primary font-label-lg px-gutter h-touch-target rounded-full btn-press shadow-sm transition-all cursor-pointer">
+                <span class="material-symbols-outlined">save</span> Guardar cambios
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

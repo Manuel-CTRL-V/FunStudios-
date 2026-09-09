@@ -14,4 +14,13 @@ public class TipoAcceso
     public int TipoAccesoId { get; set; }
 
     public string NombreAcceso { get; set; } = string.Empty;
+
+    /// <summary>Precio del acceso (configurable desde el panel de Configuración).</summary>
+    public decimal Precio { get; set; }
+
+    /// <summary>Descripción visible en el checkpoint.</summary>
+    public string? Descripcion { get; set; }
+
+    /// <summary>Indica si el tipo de acceso está activo (desactivado no se ofrece en el checkpoint).</summary>
+    public bool Activo { get; set; } = true;
 }

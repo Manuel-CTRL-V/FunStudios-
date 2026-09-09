@@ -68,9 +68,29 @@ public class AccesoController : Controller
     public async Task<IActionResult> RegistrarSalida(int id)
     {
         var resultado = await _accesoService.RegistrarSalidaAsync(id,
-            HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
+            HttpContext.Connection.RemoteIpAddress?.ToString() ?? "", UsuarioId);
 
         return Json(resultado);
+    }
+
+    // POST: /Acceso/MarcarSalida/5?retorno=bitacora
+    /// <summary>
+    /// Salida manual desde la bitácora o el perfil del niño (sin huella): marca la
+    /// salida y regresa a la pantalla de origen con un mensaje.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarcarSalida(int id, string? retorno)
+    {
+        var resultado = await _accesoService.RegistrarSalidaAsync(id,
+            HttpContext.Connection.RemoteIpAddress?.ToString() ?? "", UsuarioId);
+
+        TempData[resultado.Exito ? "Mensaje" : "Error"] = resultado.Mensaje;
+
+        if (retorno == "bitacora")
+            return RedirectToAction("Bitacora", "Reportes");
+
+        return RedirectToAction("Detalles", "Clientes", new { id });
     }
 }
 

@@ -164,7 +164,7 @@
                             <td class="px-gutter py-stack-md font-bold">@c.TotalVisitas</td>
                             <td class="px-gutter py-stack-md">
                                 <div class="flex items-center gap-0.5">
-                                    @for (var i = 1; i <= 8; i++)
+                                    @for (var i = 1; i <= Model.ChecksParaPremio; i++)
                                     {
                                         <span class="material-symbols-outlined @(i <= c.ConteoChecks ? "text-secondary" : "text-outline-variant")" style="font-size:16px;">star</span>
                                     }

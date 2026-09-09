@@ -15,6 +15,9 @@ public class Cliente
 
     public string? NotasMedicas { get; set; }
 
+    /// <summary>Nacionalidad del niño (opcional, default "Dominicana" en la UI).</summary>
+    public string? Nacionalidad { get; set; }
+
     /// <summary>
     /// Template biométrico del niño (RF3). En producción se guarda encriptado (RNF4).
     /// Null mientras no se complete el enrolamiento de 3 muestras.

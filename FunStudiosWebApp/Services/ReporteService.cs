@@ -10,11 +10,13 @@ public class ReporteService : IReporteService
 {
     private readonly FunStudiosContext _context;
     private readonly IBiometriaService _biometria;
+    private readonly IConfiguracionService _configuracion;
 
-    public ReporteService(FunStudiosContext context, IBiometriaService biometria)
+    public ReporteService(FunStudiosContext context, IBiometriaService biometria, IConfiguracionService configuracion)
     {
         _context = context;
         _biometria = biometria;
+        _configuracion = configuracion;
     }
 
     public async Task<DashboardViewModel> ObtenerDashboardAsync()
@@ -49,6 +51,7 @@ public class ReporteService : IReporteService
             IngresosDayPassHoy = ingresosDayPassHoy,
             GratisCanjeadasTotal = gratisCanjeadas,
             GratisDisponiblesSaldo = gratisSaldo,
+            ChecksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync(),
             LectorNombre = estado.NombreDispositivo,
             LectorConectado = estado.LectorConectado,
             EscaneosRecientes = escaneosRecientes
@@ -158,6 +161,7 @@ public class ReporteService : IReporteService
                 TipoAccesoId = eh.TipoAccesoId,
                 TutorNombre = eh.TutorNombre,
                 TutorTelefono = eh.TutorTelefono,
+                Acompanantes = eh.Acompanantes,
                 MontoVenta = eh.Venta?.Monto
             }).ToList()
         };
@@ -294,7 +298,8 @@ public class ReporteService : IReporteService
             SerieDiaria = serieDiaria,
             FlujoPorHoraHoy = flujoPorHora,
             ClientesFrecuentes = clientesFrecuentes,
-            DiasAnalizados = dias
+            DiasAnalizados = dias,
+            ChecksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync()
         };
     }
 

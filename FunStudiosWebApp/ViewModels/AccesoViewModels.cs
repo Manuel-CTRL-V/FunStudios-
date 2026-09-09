@@ -33,10 +33,14 @@ public class ResultadoEscaneoViewModel
 
     public byte ConteoChecks { get; set; }
     public int ChecksRestantes { get; set; }
+    public int ChecksParaPremio { get; set; } = 8;
     public int EntradasGratisDisponibles { get; set; }
 
-    /// <summary>RF9: ya se otorgó check por una entrada Day Pass hoy.</summary>
-    public bool YaCobroCheckHoy { get; set; }
+    /// <summary>Checks de fidelidad ya sumados hoy por entradas Day Pass.</summary>
+    public int ChecksSumadosHoy { get; set; }
+
+    /// <summary>Límite diario configurable de checks (Parámetro "Fidelidad.ChecksPorDia").</summary>
+    public int ChecksPorDia { get; set; } = 1;
 
     // Membresía vigente
 
@@ -44,12 +48,9 @@ public class ResultadoEscaneoViewModel
     public string? NombreMembresiaVigente { get; set; }
     public DateOnly? VenceMembresia { get; set; }
 
-    // Tutores registrados de la familia (para elegir quién acompaña en la entrada)
+    // Tutores de la familia (para elegir quiénes acompañan en la entrada del niño)
 
-    public string? NombreTutor1 { get; set; }
-    public string? TelefonoTutor1 { get; set; }
-    public string? NombreTutor2 { get; set; }
-    public string? TelefonoTutor2 { get; set; }
+    public List<TutorViewModel> Tutores { get; set; } = new();
 
     /// <summary>Opciones de acceso disponibles para registrar una entrada.</summary>
     public List<OpcionAccesoViewModel> OpcionesEntrada { get; set; } = new();
@@ -73,10 +74,16 @@ public class RegistrarEntradaRequest
     public int? MetodoPagoId { get; set; }
     public decimal Monto { get; set; }
 
-    /// <summary>"tutor1" (por defecto) | "tutor2" | "otro".</summary>
-    public string? SeleccionTutor { get; set; }
+    /// <summary>IDs de los tutores seleccionados que acompañan al niño (pueden ser varios).</summary>
+    public List<int> TutorIds { get; set; } = new();
 
-    /// <summary>Solo cuando SeleccionTutor = "otro": datos del acompañante no registrado.</summary>
+    /// <summary>
+    /// Cantidad total de acompañantes (incluye los tutores seleccionados). Puede ser
+    /// mayor que la cantidad de tutores para incluir acompañantes no registrados.
+    /// </summary>
+    public int Acompanantes { get; set; }
+
+    /// <summary>Solo cuando se marca "otro": datos del acompañante no registrado.</summary>
     public string? TutorOtroNombre { get; set; }
     public string? TutorOtroTelefono { get; set; }
 }

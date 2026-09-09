@@ -1,0 +1,162 @@
+@model ConfiguracionIndexViewModel
+@{
+    ViewData["Title"] = "Configuración";
+}
+
+<div class="flex flex-col sm:flex-row justify-between sm:items-end gap-stack-md mb-stack-lg">
+    <div>
+        <h2 class="text-headline-lg text-on-background">Configuración</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">
+            Tipos de acceso, métodos de pago y parámetros generales del sistema. Los cambios aplican de inmediato.
+        </p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+
+    <!-- ===== Tipos de Acceso ===== -->
+    <div class="lg:col-span-7 flex flex-col gap-gutter">
+        <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft overflow-hidden">
+            <div class="flex items-center justify-between mb-stack-md">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-primary-container text-sm">confirmation_number</span>
+                    </div>
+                    <h3 class="text-headline-sm text-on-surface">Tipos de Acceso</h3>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[560px]">
+                    <thead>
+                        <tr class="border-b-2 border-outline-variant/50 text-on-surface-variant font-label-sm uppercase tracking-wider">
+                            <th class="pb-3 font-semibold">Nombre</th>
+                            <th class="pb-3 font-semibold text-right">Precio</th>
+                            <th class="pb-3 font-semibold text-center">Estado</th>
+                            <th class="pb-3 pr-4 font-semibold text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-body-md">
+                        @foreach (var ta in Model.TiposAcceso)
+                        {
+                            <tr class="border-b border-outline-variant/30 last:border-0 hover:bg-surface-container-low">
+                                <td class="py-4">
+                                    <p class="font-bold text-on-surface">@ta.NombreAcceso
+                                        @if (ta.UsadoEnEntradas)
+                                        {
+                                            <span class="font-label-sm text-on-surface-variant bg-surface-variant/50 px-2 py-0.5 rounded-full ml-1" title="Ya se usó en entradas">en uso</span>
+                                        }
+                                    </p>
+                                    @if (!string.IsNullOrWhiteSpace(ta.Descripcion))
+                                    {
+                                        <p class="font-label-sm text-on-surface-variant mt-0.5">@ta.Descripcion</p>
+                                    }
+                                </td>
+                                <td class="py-4 text-right font-bold">@ta.Precio.ToString("C0")</td>
+                                <td class="py-4 text-center">
+                                    <span class="font-label-sm px-3 py-1 rounded-full border @(ta.Activo ? "bg-tertiary-container/10 text-tertiary border-tertiary/20" : "bg-surface-variant/50 text-on-surface-variant border-outline-variant/30")">
+                                        @(ta.Activo ? "Activo" : "Desactivado")
+                                    </span>
+                                </td>
+                                <td class="py-4 pr-4 text-right whitespace-nowrap">
+                                    <a asp-controller="Configuracion" asp-action="EditarTipoAcceso" asp-route-id="@ta.TipoAccesoId"
+                                       class="inline-flex p-2 text-primary hover:bg-primary/10 rounded-full transition-colors" title="Editar">
+                                        <span class="material-symbols-outlined">edit</span>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Parámetros Generales ===== -->
+    <div class="lg:col-span-5 flex flex-col gap-gutter">
+        <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft overflow-hidden">
+            <div class="flex items-center gap-2 mb-stack-md">
+                <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary-container text-sm">tune</span>
+                </div>
+                <h3 class="text-headline-sm text-on-surface">Parámetros Generales</h3>
+            </div>
+
+            @if (!Model.Parametros.Any())
+            {
+                <p class="text-body-md text-on-surface-variant text-center py-gutter">Sin parámetros registrados.</p>
+            }
+
+            <ul class="flex flex-col gap-stack-sm">
+                @foreach (var p in Model.Parametros)
+                {
+                    <li class="flex items-center justify-between gap-stack-md bg-surface-container-low rounded-xl px-stack-md py-stack-sm">
+                        <div class="min-w-0">
+                            <p class="font-label-lg text-on-surface truncate">@(p.NombreVisible ?? p.Clave)</p>
+                            <p class="font-label-sm text-on-surface-variant truncate">@p.Clave · @p.Tipo</p>
+                            @if (!string.IsNullOrWhiteSpace(p.Descripcion))
+                            {
+                                <p class="font-label-sm text-on-surface-variant truncate" title="@p.Descripcion">@p.Descripcion</p>
+                            }
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="font-label-lg text-secondary bg-secondary-fixed-dim/20 px-3 py-1 rounded-full">@p.Valor</span>
+                            <a asp-controller="Configuracion" asp-action="EditarParametro" asp-route-id="@p.ParametroId"
+                               class="inline-flex p-2 text-primary hover:bg-primary/10 rounded-full transition-colors" title="Editar">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== Métodos de Pago ===== -->
+    <div class="lg:col-span-12 flex flex-col gap-gutter">
+        <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-stack-md mb-stack-md">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-primary-container text-sm">payments</span>
+                    </div>
+                    <h3 class="text-headline-sm text-on-surface">Métodos de Pago</h3>
+                </div>
+                <a asp-controller="Configuracion" asp-action="CrearMetodoPago"
+                   class="self-start flex items-center gap-2 px-6 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all shadow-soft">
+                    <span class="material-symbols-outlined">add</span> Nuevo método
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+                @foreach (var mp in Model.MetodosPago)
+                {
+                    <div class="flex items-center justify-between gap-2 bg-surface-container-low rounded-xl px-stack-md py-stack-sm border border-outline-variant/30">
+                        <div class="min-w-0">
+                            <p class="font-bold text-on-surface truncate">@mp.NombreMetodo</p>
+                            <p class="font-label-sm text-on-surface-variant">
+                                @(mp.EnUso ? "En uso" : "Sin usos")
+                            </p>
+                        </div>
+                        <div class="flex items-center shrink-0">
+                            <a asp-controller="Configuracion" asp-action="EditarMetodoPago" asp-route-id="@mp.MetodoPagoId"
+                               class="inline-flex p-2 text-primary hover:bg-primary/10 rounded-full transition-colors" title="Editar">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                            @if (!mp.EnUso)
+                            {
+                                <form asp-controller="Configuracion" asp-action="EliminarMetodoPago" asp-route-id="@mp.MetodoPagoId" method="post"
+                                      onsubmit="return confirm('¿Eliminar el método de pago @mp.NombreMetodo?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="inline-flex p-2 text-error hover:bg-error/10 rounded-full transition-colors cursor-pointer" title="Eliminar">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

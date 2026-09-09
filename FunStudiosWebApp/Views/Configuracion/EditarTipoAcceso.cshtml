@@ -1,0 +1,63 @@
+@model TipoAccesoEditarViewModel
+@{
+    ViewData["Title"] = $"Editar · {Model.NombreAcceso}";
+}
+
+<div class="max-w-3xl mx-auto">
+    <div class="mb-stack-lg">
+        <h2 class="text-headline-lg text-on-background">Editar Tipo de Acceso</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">
+            Ajuste el nombre, precio y disponibilidad de <b>@Model.NombreAcceso</b>. Los cambios aplican de inmediato en el checkpoint.
+        </p>
+    </div>
+
+    <form asp-controller="Configuracion" asp-action="EditarTipoAcceso" asp-route-id="@Model.TipoAccesoId" method="post"
+          class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft flex flex-col gap-gutter">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="TipoAccesoId" />
+        <input type="hidden" asp-for="NombreAcceso" />
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+            <div class="flex flex-col gap-1">
+                <label class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre</label>
+                <input asp-for="NombreAcceso" disabled
+                       class="w-full bg-surface-container/50 border-2 border-transparent rounded-full py-3 px-4 h-[48px] opacity-60" />
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="Precio" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Precio (RD$)</label>
+                <input asp-for="Precio" type="number" step="0.01" min="0"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
+                <span asp-validation-for="Precio" class="font-label-sm text-error ml-4"></span>
+            </div>
+
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label asp-for="Descripcion" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Descripción (se muestra en el checkpoint)</label>
+                <textarea asp-for="Descripcion" rows="2"
+                          class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-[1rem] py-3 px-4 focus:outline-none"></textarea>
+            </div>
+
+            <div class="flex flex-col gap-1 md:col-span-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input asp-for="Activo" type="checkbox" class="w-5 h-5 accent-[#0077ce]" />
+                    <span class="font-label-lg text-on-surface">Tipo de acceso activo (se ofrece en el checkpoint)</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-stack-md mt-stack-md">
+            <a asp-controller="Configuracion" asp-action="Index"
+               class="flex items-center justify-center px-gutter h-touch-target bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="flex items-center gap-2 bg-primary hover:bg-surface-tint text-on-primary font-label-lg px-gutter h-touch-target rounded-full btn-press shadow-sm transition-all cursor-pointer">
+                <span class="material-symbols-outlined">save</span> Guardar cambios
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

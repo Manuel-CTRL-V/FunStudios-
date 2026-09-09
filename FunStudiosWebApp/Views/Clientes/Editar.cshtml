@@ -39,6 +39,24 @@
                 <span asp-validation-for="FechaNacimiento" class="font-label-sm text-error ml-4"></span>
             </div>
 
+            <div class="flex flex-col gap-1">
+                <label asp-for="Nacionalidad" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nacionalidad (opcional)</label>
+                <select asp-for="Nacionalidad"
+                        class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none">
+                    @foreach (var n in Nacionalidades.Todas)
+                    {
+                        if ((Model.Nacionalidad ?? Nacionalidades.Default) == n)
+                        {
+                            <option value="@n" selected>@n</option>
+                        }
+                        else
+                        {
+                            <option value="@n">@n</option>
+                        }
+                    }
+                </select>
+            </div>
+
             <div class="flex flex-col gap-1 md:col-span-2">
                 <label asp-for="NotasMedicas" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Notas médicas (opcional)</label>
                 <textarea asp-for="NotasMedicas" rows="2"
@@ -46,41 +64,19 @@
             </div>
         </div>
 
-        <!-- Teléfonos de la familia -->
+        <!-- Tutores de la familia -->
         <div class="flex items-center gap-2 mb-unit pt-stack-md border-t border-outline-variant/30">
             <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-primary-container text-sm">family_restroom</span>
             </div>
-            <h3 class="text-headline-sm text-on-surface">Datos de los Tutores</h3>
+            <h3 class="text-headline-sm text-on-surface">Tutores de la familia</h3>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-            <div class="flex flex-col gap-1">
-                <label asp-for="NombreTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Tutor 1</label>
-                <input asp-for="NombreTutor1" placeholder="ej. Laura Ortega"
-                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
-                <span asp-validation-for="NombreTutor1" class="font-label-sm text-error ml-4"></span>
-            </div>
-
-            <div class="flex flex-col gap-1">
-                <label asp-for="TelefonoTutor1" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 1</label>
-                <input asp-for="TelefonoTutor1" placeholder="8090000000" type="tel" inputmode="numeric" maxlength="12" oninput="formatTelefono(this)"
-                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
-                <span asp-validation-for="TelefonoTutor1" class="font-label-sm text-error ml-4"></span>
-            </div>
-
-            <div class="flex flex-col gap-1">
-                <label asp-for="NombreTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Tutor 2 (opcional)</label>
-                <input asp-for="NombreTutor2" placeholder="ej. Carlos Pérez"
-                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none placeholder:text-outline-variant" />
-            </div>
-
-            <div class="flex flex-col gap-1">
-                <label asp-for="TelefonoTutor2" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor 2 (opcional)</label>
-                <input asp-for="TelefonoTutor2" placeholder="8090000000" type="tel" inputmode="numeric" maxlength="12" oninput="formatTelefono(this)"
-                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none placeholder:text-outline-variant" />
-            </div>
-        </div>
+        <p class="font-label-sm text-on-surface-variant md:col-span-2">
+            Los tutores se administran desde el
+            <a asp-controller="Familias" asp-action="Detalles" asp-route-id="@Model.FamiliaId"
+               class="text-primary hover:text-surface-tint font-bold">perfil de la familia</a>.
+        </p>
 
         <!-- Acciones -->
         <div class="flex justify-end gap-stack-md mt-stack-md">

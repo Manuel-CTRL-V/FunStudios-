@@ -1,0 +1,41 @@
+@model MetodoPagoFormViewModel
+@{
+    ViewData["Title"] = "Nuevo Método de Pago";
+}
+
+<div class="max-w-3xl mx-auto">
+    <div class="mb-stack-lg">
+        <h2 class="text-headline-lg text-on-background">Nuevo Método de Pago</h2>
+        <p class="text-body-md text-on-surface-variant mt-1">Agregue un método de pago para el registro de entradas Day Pass.</p>
+    </div>
+
+    <form asp-controller="Configuracion" asp-action="CrearMetodoPago" method="post"
+          class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft flex flex-col gap-gutter">
+        @Html.AntiForgeryToken()
+
+        <div class="flex flex-col gap-1">
+            <label asp-for="NombreMetodo" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del método</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">payments</span>
+                <input asp-for="NombreMetodo" placeholder="ej. Zelle"
+                       class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+            </div>
+            <span asp-validation-for="NombreMetodo" class="font-label-sm text-error ml-4"></span>
+        </div>
+
+        <div class="flex justify-end gap-stack-md mt-stack-md">
+            <a asp-controller="Configuracion" asp-action="Index"
+               class="flex items-center justify-center px-gutter h-touch-target bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="flex items-center gap-2 bg-primary hover:bg-surface-tint text-on-primary font-label-lg px-gutter h-touch-target rounded-full btn-press shadow-sm transition-all cursor-pointer">
+                <span class="material-symbols-outlined">save</span> Crear método
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

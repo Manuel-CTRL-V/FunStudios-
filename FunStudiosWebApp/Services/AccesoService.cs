@@ -7,22 +7,21 @@ namespace FunStudiosWebApp.Services;
 
 /// <summary>
 /// Implementación del checkpoint. Aquí vive la lógica de fidelidad:
-/// - RF8: cada visita Day Pass suma 1 check (máximo 8).
-/// - RF9: máximo un check por día aunque salga y vuelva a entrar.
-/// - RF10: al llegar a 8 checks se acredita entrada gratis y el ciclo reinicia.
+/// - RF8: cada visita Day Pass suma 1 check (máximo checksParaPremio, configurable).
+/// - RF9: máximo checksPorDia por día (configurable) aunque salga y vuelva a entrar.
+/// - RF10: al llegar a la meta se acredita entrada gratis y el ciclo reinicia.
 /// </summary>
 public class AccesoService : IAccesoService
 {
     private readonly FunStudiosContext _context;
     private readonly IBiometriaService _biometria;
+    private readonly IConfiguracionService _configuracion;
 
-    /// <summary>Precio de referencia del Day Pass mientras no exista módulo de precios.</summary>
-    public const decimal PrecioDayPass = 400.00m;
-
-    public AccesoService(FunStudiosContext context, IBiometriaService biometria)
+    public AccesoService(FunStudiosContext context, IBiometriaService biometria, IConfiguracionService configuracion)
     {
         _context = context;
         _biometria = biometria;
+        _configuracion = configuracion;
     }
 
     public async Task<ResultadoEscaneoViewModel> EscanearAsync(int? usuarioId, string ip)
@@ -32,14 +31,16 @@ public class AccesoService : IAccesoService
         // Clientes con huella del niño enrolada
         var clientes = await _context.Clientes
             .Include(c => c.Familia)
+                .ThenInclude(f => f!.Tutores)
             .Include(c => c.FidelidadCuenta)
             .Where(c => c.HuellaNinoTemplate != null)
             .ToListAsync();
 
-        // Familias con huella del tutor enrolada (RF4: niños menores de 2 años)
-        var familiasConTutor = await _context.Familias
-            .Include(f => f.Clientes)
-            .Where(f => f.HuellaTutorTemplate != null)
+        // Tutores con huella enrolada (RF4: niños menores de 2 años)
+        var tutoresConHuella = await _context.Tutores
+            .Include(t => t.Familia)
+                .ThenInclude(f => f!.Clientes)
+            .Where(t => t.HuellaTemplate != null)
             .ToListAsync();
 
         // Construye la lista ordenada de templates para la identificación 1:N,
@@ -55,9 +56,10 @@ public class AccesoService : IAccesoService
         }
 
         // Huellas de los tutores (RF4: niños menores de 2 años)
-        foreach (var familia in familiasConTutor)
+        foreach (var tutor in tutoresConHuella)
         {
-            candidatos.Add((Convert.ToBase64String(familia.HuellaTutorTemplate!), () =>
+            var familia = tutor.Familia!;
+            candidatos.Add((Convert.ToBase64String(tutor.HuellaTemplate!), () =>
             {
                 // Se resuelve al niño de esa familia que dependa de la huella del tutor,
                 // o al menor si todos tienen huella propia.
@@ -106,15 +108,22 @@ public class AccesoService : IAccesoService
     {
         var hoy = DateTime.Now.Date;
 
+        var checksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync();
+        var tiposAcceso = await _context.TiposAcceso.ToListAsync();
+        var tipoDayPass = tiposAcceso.FirstOrDefault(ta => ta.TipoAccesoId == TipoAcceso.DayPass);
+        var tipoFidelidad = tiposAcceso.FirstOrDefault(ta => ta.TipoAccesoId == TipoAcceso.FidelidadGratis);
+        var tipoMembresia = tiposAcceso.FirstOrDefault(ta => ta.TipoAccesoId == TipoAcceso.Membresia);
+
         var entradaAbierta = await _context.EntradasHistorial
             .Where(eh => eh.ClienteId == cliente.ClienteId && eh.FechaHoraSalida == null)
             .OrderByDescending(eh => eh.FechaHoraEntrada)
             .FirstOrDefaultAsync();
 
-        var yaCobroCheckHoy = await _context.EntradasHistorial
-            .AnyAsync(eh => eh.ClienteId == cliente.ClienteId &&
-                            eh.TipoAccesoId == TipoAcceso.DayPass &&
-                            eh.FechaHoraEntrada >= hoy);
+        var checksPorDia = await _configuracion.ObtenerChecksPorDiaAsync();
+        var checksSumadosHoy = await _context.EntradasHistorial
+            .CountAsync(eh => eh.ClienteId == cliente.ClienteId &&
+                              eh.TipoAccesoId == TipoAcceso.DayPass &&
+                              eh.FechaHoraEntrada >= hoy);
 
         var membresiaVigente = cliente.Membresias
             .Where(m => m.Vigente)
@@ -137,45 +146,59 @@ public class AccesoService : IAccesoService
             EntradaAbiertaId = entradaAbierta?.EntradaId,
             HoraEntradaActual = entradaAbierta?.FechaHoraEntrada,
             ConteoChecks = fidelidad.ConteoChecks,
-            ChecksRestantes = fidelidad.ChecksRestantes,
+            ChecksRestantes = Math.Max(0, checksParaPremio - fidelidad.ConteoChecks),
+            ChecksParaPremio = checksParaPremio,
             EntradasGratisDisponibles = fidelidad.EntradasGratisGanadas,
-            YaCobroCheckHoy = yaCobroCheckHoy,
+            ChecksSumadosHoy = checksSumadosHoy,
+            ChecksPorDia = checksPorDia,
             MembresiaVigente = membresiaVigente != null,
             NombreMembresiaVigente = membresiaVigente?.NombreMembresia,
             VenceMembresia = membresiaVigente?.FechaFin,
-            NombreTutor1 = cliente.Familia?.NombreTutor1,
-            TelefonoTutor1 = cliente.Familia?.TelefonoTutor1,
-            NombreTutor2 = cliente.Familia?.NombreTutor2,
-            TelefonoTutor2 = cliente.Familia?.TelefonoTutor2
+            Tutores = (cliente.Familia?.Tutores ?? new List<Tutor>())
+                .OrderByDescending(t => t.EsPrincipal)
+                .ThenBy(t => t.TutorId)
+                .Select(t => new TutorViewModel
+                {
+                    TutorId = t.TutorId,
+                    Nombre = t.Nombre,
+                    Telefono = t.Telefono,
+                    EsPrincipal = t.EsPrincipal
+                })
+                .ToList()
         };
 
-        // Opciones de acceso disponibles cuando está fuera del parque
+        // Opciones de acceso disponibles cuando está fuera del parque (solo tipos activos)
         if (!resultado.EstaDentro)
         {
-            resultado.OpcionesEntrada.Add(new OpcionAccesoViewModel
-            {
-                TipoAccesoId = TipoAcceso.DayPass,
-                Nombre = "Day Pass",
-                Descripcion = $"Pago de entrada (${PrecioDayPass:0})",
-                RequierePago = true
-            });
-
-            if (fidelidad.EntradasGratisGanadas > 0)
+            if (tipoDayPass is { Activo: true })
             {
                 resultado.OpcionesEntrada.Add(new OpcionAccesoViewModel
                 {
-                    TipoAccesoId = TipoAcceso.FidelidadGratis,
+                    TipoAccesoId = tipoDayPass.TipoAccesoId,
+                    Nombre = tipoDayPass.NombreAcceso,
+                    Descripcion = string.IsNullOrWhiteSpace(tipoDayPass.Descripcion)
+                        ? $"Pago de entrada (${tipoDayPass.Precio:0})"
+                        : tipoDayPass.Descripcion,
+                    RequierePago = true
+                });
+            }
+
+            if (fidelidad.EntradasGratisGanadas > 0 && tipoFidelidad is { Activo: true })
+            {
+                resultado.OpcionesEntrada.Add(new OpcionAccesoViewModel
+                {
+                    TipoAccesoId = tipoFidelidad.TipoAccesoId,
                     Nombre = "Entrada Gratis",
                     Descripcion = $"Canjea su recompensa ({fidelidad.EntradasGratisGanadas} disponible)",
                     RequierePago = false
                 });
             }
 
-            if (membresiaVigente != null)
+            if (membresiaVigente != null && tipoMembresia is { Activo: true })
             {
                 resultado.OpcionesEntrada.Add(new OpcionAccesoViewModel
                 {
-                    TipoAccesoId = TipoAcceso.Membresia,
+                    TipoAccesoId = tipoMembresia.TipoAccesoId,
                     Nombre = membresiaVigente.NombreMembresia,
                     Descripcion = $"Membresía vigente hasta {membresiaVigente.FechaFin:dd/MM/yyyy}",
                     RequierePago = false
@@ -193,6 +216,7 @@ public class AccesoService : IAccesoService
 
         var cliente = await _context.Clientes
             .Include(c => c.Familia)
+                .ThenInclude(f => f!.Tutores)
             .Include(c => c.FidelidadCuenta)
             .Include(c => c.Membresias)
             .FirstOrDefaultAsync(c => c.ClienteId == solicitud.ClienteId);
@@ -218,6 +242,23 @@ public class AccesoService : IAccesoService
         // ---------- Validaciones por tipo de acceso ----------
         Venta? venta = null;
 
+        var tiposAcceso = await _context.TiposAcceso.ToListAsync();
+        var tipoSeleccionado = tiposAcceso.FirstOrDefault(ta => ta.TipoAccesoId == solicitud.TipoAccesoId);
+
+        if (tipoSeleccionado == null)
+        {
+            resultado.Mensaje = "Tipo de acceso no válido.";
+            return resultado;
+        }
+
+        // Un tipo desactivado desde Configuración no permite registrar entradas
+        var tipoActivo = tiposAcceso.FirstOrDefault(ta => ta.TipoAccesoId == solicitud.TipoAccesoId && ta.Activo);
+        if (tipoActivo == null)
+        {
+            resultado.Mensaje = $"El acceso '{tipoSeleccionado.NombreAcceso}' está desactivado. Dígale al administrador para reactivarlo.";
+            return resultado;
+        }
+
         switch (solicitud.TipoAccesoId)
         {
             case TipoAcceso.DayPass:
@@ -231,8 +272,8 @@ public class AccesoService : IAccesoService
                 {
                     ClienteId = cliente.ClienteId,
                     MetodoPagoId = solicitud.MetodoPagoId.Value,
-                    Monto = solicitud.Monto > 0 ? solicitud.Monto : PrecioDayPass,
-                    Descripcion = "Day Pass",
+                    Monto = solicitud.Monto > 0 ? solicitud.Monto : tipoActivo.Precio,
+                    Descripcion = tipoActivo.NombreAcceso,
                     FechaVenta = DateTime.Now
                 };
                 _context.Ventas.Add(venta);
@@ -261,31 +302,38 @@ public class AccesoService : IAccesoService
 
         await _context.SaveChangesAsync();
 
-        // ---------- Registro de la entrada (RF6): tutor responsable ----------
-        var seleccion = solicitud.SeleccionTutor ?? "tutor1";
-        string? tutorNombre;
-        string? tutorTelefono;
+        // ---------- Registro de la entrada (RF6): tutor(es) responsable(s) ----------
+        var tutoresSeleccionados = (cliente.Familia?.Tutores ?? new List<Tutor>())
+            .Where(t => solicitud.TutorIds.Contains(t.TutorId))
+            .OrderBy(t => t.TutorId)
+            .ToList();
 
-        if (seleccion == "tutor2" && !string.IsNullOrWhiteSpace(cliente.Familia?.TelefonoTutor2))
+        var nombresTutores = tutoresSeleccionados.Select(t => t.Nombre.Trim()).ToList();
+
+        // Acompañante no registrado (opcional, se anexa al snapshot de responsables)
+        if (!string.IsNullOrWhiteSpace(solicitud.TutorOtroNombre))
         {
-            tutorNombre = string.IsNullOrWhiteSpace(cliente.Familia?.NombreTutor2) ? "Tutor 2" : cliente.Familia!.NombreTutor2!.Trim();
-            tutorTelefono = cliente.Familia!.TelefonoTutor2!.Trim();
+            nombresTutores.Add(solicitud.TutorOtroNombre.Trim());
         }
-        else if (seleccion == "otro")
+
+        // Si no se seleccionó ninguno, se usa el tutor principal de la familia como responsable
+        if (nombresTutores.Count == 0)
         {
-            if (string.IsNullOrWhiteSpace(solicitud.TutorOtroNombre))
+            var principal = (cliente.Familia?.Tutores ?? new List<Tutor>())
+                .FirstOrDefault(t => t.EsPrincipal);
+            if (principal != null)
             {
-                resultado.Mensaje = "Al seleccionar «Otro acompañante», ingrese el nombre.";
-                return resultado;
+                tutoresSeleccionados.Add(principal);
+                nombresTutores.Add(principal.Nombre.Trim());
             }
-            tutorNombre = solicitud.TutorOtroNombre.Trim();
-            tutorTelefono = string.IsNullOrWhiteSpace(solicitud.TutorOtroTelefono) ? null : solicitud.TutorOtroTelefono.Trim();
         }
-        else
-        {
-            tutorNombre = string.IsNullOrWhiteSpace(cliente.Familia?.NombreTutor1) ? "Tutor 1" : cliente.Familia!.NombreTutor1!.Trim();
-            tutorTelefono = cliente.Familia?.TelefonoTutor1?.Trim();
-        }
+
+        var tutorNombre = nombresTutores.Count > 0 ? string.Join(", ", nombresTutores) : null;
+        var tutorTelefono = tutoresSeleccionados.FirstOrDefault()?.Telefono
+            ?? (!string.IsNullOrWhiteSpace(solicitud.TutorOtroTelefono) ? solicitud.TutorOtroTelefono.Trim() : null);
+
+        // La cantidad de acompañantes incluye los tutores seleccionados y no puede ser menor
+        var acompanantes = Math.Max(solicitud.Acompanantes, tutoresSeleccionados.Count);
 
         var entrada = new EntradaHistorial
         {
@@ -298,31 +346,42 @@ public class AccesoService : IAccesoService
                 : null,
             VentaId = venta?.VentaId,
             TutorNombre = tutorNombre,
-            TutorTelefono = tutorTelefono
+            TutorTelefono = tutorTelefono,
+            Acompanantes = acompanantes
         };
 
         _context.EntradasHistorial.Add(entrada);
 
+        // Canjear una entrada gratis consume la recompensa acumulada (RF10)
+        if (solicitud.TipoAccesoId == TipoAcceso.FidelidadGratis)
+        {
+            cliente.FidelidadCuenta!.EntradasGratisGanadas--;
+            cliente.FidelidadCuenta!.FechaUltimaActualizacion = DateTime.Now;
+        }
+
         // Fidelidad (RF8, RF9, RF10): solo Day Pass acumula checks
+        var checksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync();
+
         if (solicitud.TipoAccesoId == TipoAcceso.DayPass)
         {
             var fidelidad = cliente.FidelidadCuenta ??= new FidelidadCuenta { ClienteId = cliente.ClienteId };
             var hoy = DateTime.Now.Date;
 
-            // RF9: ya existe una entrada Day Pass hoy -> no duplica check
-            var yaCobroCheckHoy = await _context.EntradasHistorial
-                .AnyAsync(eh => eh.ClienteId == cliente.ClienteId &&
-                                eh.TipoAccesoId == TipoAcceso.DayPass &&
-                                eh.FechaHoraEntrada >= hoy &&
-                                eh.EntradaId != entrada.EntradaId);
+            // RF9: límite de checks por día configurable (Parámetro "Fidelidad.ChecksPorDia").
+            // La entrada actual aún no está persistida, así que el conteo de hoy no la incluye.
+            var checksPorDia = await _configuracion.ObtenerChecksPorDiaAsync();
+            var checksSumadosHoy = await _context.EntradasHistorial
+                .CountAsync(eh => eh.ClienteId == cliente.ClienteId &&
+                                  eh.TipoAccesoId == TipoAcceso.DayPass &&
+                                  eh.FechaHoraEntrada >= hoy);
 
-            if (!yaCobroCheckHoy)
+            if (checksSumadosHoy < checksPorDia)
             {
                 fidelidad.ConteoChecks++;
                 fidelidad.FechaUltimaActualizacion = DateTime.Now;
 
-                // RF10: al completar 8 checks se acredita la entrada gratis y reinicia el ciclo
-                if (fidelidad.ConteoChecks >= FidelidadCuenta.ChecksParaPremio)
+                // RF10: al completar la meta configurada se acredita la entrada gratis y reinicia el ciclo
+                if (fidelidad.ConteoChecks >= checksParaPremio)
                 {
                     fidelidad.ConteoChecks = 0;
                     fidelidad.EntradasGratisGanadas++;
@@ -337,13 +396,13 @@ public class AccesoService : IAccesoService
 
         resultado.Exito = true;
         resultado.Mensaje = resultado.PremioGanado
-            ? $"¡{cliente.Nombre} completó sus 8 visitas y ganó una entrada gratis!"
+            ? $"¡{cliente.Nombre} completó sus {checksParaPremio} visitas y ganó una entrada gratis!"
             : $"Entrada registrada para {cliente.Nombre} a las {entrada.FechaHoraEntrada:HH:mm}.";
 
         return resultado;
     }
 
-    public async Task<ResultadoRegistroEntradaViewModel> RegistrarSalidaAsync(int clienteId, string ip)
+    public async Task<ResultadoRegistroEntradaViewModel> RegistrarSalidaAsync(int clienteId, string ip, int? usuarioId = null)
     {
         var resultado = new ResultadoRegistroEntradaViewModel();
 
@@ -370,6 +429,10 @@ public class AccesoService : IAccesoService
         // RF7: hora exacta de salida para el control de presencia
         entradaAbierta.FechaHoraSalida = DateTime.Now;
         await _context.SaveChangesAsync();
+
+        await _biometria.RegistrarEventoAsync("SalidaManual",
+            $"Salida registrada manualmente para {cliente.Nombre} a las {entradaAbierta.FechaHoraSalida:HH:mm}.",
+            "Info", usuarioId, cliente.ClienteId, ip);
 
         resultado.Exito = true;
         resultado.Mensaje = $"Salida registrada para {cliente.Nombre} a las {entradaAbierta.FechaHoraSalida:HH:mm}.";

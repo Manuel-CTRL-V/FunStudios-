@@ -126,6 +126,28 @@
                         <span asp-validation-for="FechaNacimiento" class="font-label-sm text-error ml-4"></span>
                     </div>
 
+                    <div class="flex flex-col gap-1">
+                        <label asp-for="Nacionalidad" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nacionalidad (opcional)</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">public</span>
+                            <select asp-for="Nacionalidad"
+                                    class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all">
+                                @foreach (var n in Nacionalidades.Todas)
+                                {
+                                    if ((Model.Nacionalidad ?? Nacionalidades.Default) == n)
+                                    {
+                                        <option value="@n" selected>@n</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@n">@n</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <span asp-validation-for="Nacionalidad" class="font-label-sm text-error ml-4"></span>
+                    </div>
+
                     <div class="flex flex-col gap-1 md:col-span-2">
                         <label asp-for="NotasMedicas" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Notas médicas (opcional)</label>
                         <textarea asp-for="NotasMedicas" rows="2" placeholder="Alergias, condiciones especiales..."
@@ -157,17 +179,27 @@
                     </label>
                 </div>
 
-                <!-- Familia existente -->
+                <!-- Familia existente (RF4: lista buscable) -->
                 <div id="familia-existente-section" class="hidden mb-gutter">
                     <div class="flex flex-col gap-1 md:w-1/2">
-                        <label asp-for="FamiliaExistenteId" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Seleccione la familia</label>
-                        <select asp-for="FamiliaExistenteId" class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 h-[48px] focus:outline-none">
-                            <option value="" disabled selected>— Familias —</option>
+                        <label for="busqueda-familia" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Buscar familia por apellidos o código</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+                            <input id="busqueda-familia" type="text" placeholder="ej. Pérez-García o FAM-001"
+                                   oninput="filtrarFamilias(this.value)"
+                                   class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                        </div>
+                        <select asp-for="FamiliaExistenteId" size="6"
+                                class="bg-surface-container border-2 border-transparent focus:border-primary rounded-[1rem] px-4 py-3 focus:outline-none transition-all">
+                            <option value="" disabled selected>— Seleccione la familia —</option>
                             @foreach (var f in Model.FamiliasExistentes)
                             {
-                                <option value="@f.FamiliaId">@f.Etiqueta</option>
+                                <option value="@f.FamiliaId" data-busqueda="@($"{f.ApellidosFamilia} {f.CodigoFamilia} {f.Etiqueta}")">
+                                    @f.ApellidosFamilia @(f.CodigoFamilia is null ? "" : $" · {f.CodigoFamilia}") · @f.Etiqueta
+                                </option>
                             }
                         </select>
+                        <span asp-validation-for="FamiliaExistenteId" class="font-label-sm text-error ml-4"></span>
                     </div>
                 </div>
 
@@ -359,6 +391,34 @@
             }
         });
         document.getElementById('FamiliaExistenteId').required = usarExistente;
+
+        // Limpia y resetea la búsqueda al cambiar de modo
+        if (usarExistente) {
+            document.getElementById('busqueda-familia').value = '';
+            filtrarFamilias('');
+        }
+    }
+
+    // Filtro de la lista de familias registradas
+    function filtrarFamilias(texto) {
+        const q = (texto || '').trim().toLowerCase();
+        document.querySelectorAll('#FamiliaExistenteId option').forEach(o => {
+            if (!o.value) { o.hidden = false; return; } // opción "Seleccione"
+            const busca = (o.dataset.busqueda || o.textContent).toLowerCase();
+            o.hidden = q !== '' && !busca.includes(q);
+        });
+
+        // Si hay una única coincidencia y el usuario presiona Enter, se selecciona
+        document.getElementById('busqueda-familia').onkeydown = (e) => {
+            if (e.key === 'Enter' && q !== '') {
+                e.preventDefault();
+                const primera = Array.from(document.querySelectorAll('#FamiliaExistenteId option')).find(o => o.value && !o.hidden);
+                if (primera) {
+                    primera.selected = true;
+                    document.getElementById('FamiliaExistenteId').focus();
+                }
+            }
+        };
     }
 
     toggleModoFamilia();

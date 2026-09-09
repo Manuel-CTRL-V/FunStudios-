@@ -13,6 +13,9 @@ public class DashboardViewModel
     public int GratisCanjeadasTotal { get; set; }
     public int GratisDisponiblesSaldo { get; set; }
 
+    /// <summary>Meta de checks de fidelidad leída de Parametros (para el modal de premio).</summary>
+    public int ChecksParaPremio { get; set; } = 8;
+
     public string LectorNombre { get; set; } = string.Empty;
     public bool LectorConectado { get; set; }
 
@@ -108,6 +111,9 @@ public class InteligenciaNegocioViewModel
     public List<FlujoHoraViewModel> FlujoPorHoraHoy { get; set; } = new();
     public List<ClienteFrecuenteViewModel> ClientesFrecuentes { get; set; } = new();
     public int DiasAnalizados { get; set; } = 14;
+
+    /// <summary>Meta de checks leída de Parametros (estrellas de los clientes frecuentes).</summary>
+    public int ChecksParaPremio { get; set; } = 8;
 }
 
 /// <summary>Fila del listado de logs biométricos.</summary>

@@ -18,6 +18,7 @@ public class FunStudiosContext : DbContext
     }
 
     public DbSet<Familia> Familias { get; set; }
+    public DbSet<Tutor> Tutores { get; set; }
     public DbSet<Cliente> Clientes { get; set; }
     public DbSet<TipoAcceso> TiposAcceso { get; set; }
     public DbSet<Membresia> Membresias { get; set; }
@@ -28,6 +29,7 @@ public class FunStudiosContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Rol> Roles { get; set; }
     public DbSet<LogBiometrico> LogsBiometrico { get; set; }
+    public DbSet<Parametro> Parametros { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,15 +61,27 @@ public class FunStudiosContext : DbContext
         {
             entity.HasKey(f => f.FamiliaId);
             entity.Property(f => f.ApellidosFamilia).HasMaxLength(150).IsRequired();
-            entity.Property(f => f.NombreTutor1).HasMaxLength(100);
-            entity.Property(f => f.TelefonoTutor1).HasMaxLength(20).IsRequired();
-            entity.Property(f => f.NombreTutor2).HasMaxLength(100);
-            entity.Property(f => f.TelefonoTutor2).HasMaxLength(20);
+            entity.Property(f => f.CodigoFamilia).HasMaxLength(20);
+            entity.HasIndex(f => f.CodigoFamilia).IsUnique();
 
             entity.HasMany(f => f.Clientes)
                   .WithOne(c => c.Familia!)
                   .HasForeignKey(c => c.FamiliaId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(f => f.Tutores)
+                  .WithOne(t => t.Familia!)
+                  .HasForeignKey(t => t.FamiliaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ---------- Tutores (tabla SQL: Tutores) ----------
+        modelBuilder.Entity<Tutor>(entity =>
+        {
+            entity.HasKey(t => t.TutorId);
+            entity.Property(t => t.Nombre).HasMaxLength(100).IsRequired();
+            entity.Property(t => t.Telefono).HasMaxLength(20).IsRequired();
+            entity.HasIndex(t => t.FamiliaId);
         });
 
         // ---------- Clientes (tabla SQL: Clientes) ----------
@@ -77,6 +91,7 @@ public class FunStudiosContext : DbContext
             entity.Property(c => c.Nombre).HasMaxLength(100).IsRequired();
             entity.Property(c => c.FechaNacimiento).IsRequired();
             entity.Property(c => c.NotasMedicas).HasMaxLength(500);
+            entity.Property(c => c.Nacionalidad).HasMaxLength(50);
 
             // Relación 1 a 1 con la cuenta de fidelidad
             entity.HasOne(c => c.FidelidadCuenta)
@@ -90,6 +105,21 @@ public class FunStudiosContext : DbContext
         {
             entity.HasKey(ta => ta.TipoAccesoId);
             entity.Property(ta => ta.NombreAcceso).HasMaxLength(50).IsRequired();
+            entity.Property(ta => ta.Precio).HasColumnType("decimal(10,2)");
+            entity.Property(ta => ta.Descripcion).HasMaxLength(200);
+            entity.Property(ta => ta.Activo);
+        });
+
+        // ---------- Parametros (tabla SQL: Parametros) ----------
+        modelBuilder.Entity<Parametro>(entity =>
+        {
+            entity.HasKey(p => p.ParametroId);
+            entity.Property(p => p.Clave).HasMaxLength(100).IsRequired();
+            entity.HasIndex(p => p.Clave).IsUnique();
+            entity.Property(p => p.Valor).HasMaxLength(500);
+            entity.Property(p => p.Descripcion).HasMaxLength(300);
+            entity.Property(p => p.Tipo).HasMaxLength(20).IsRequired();
+            entity.Property(p => p.NombreVisible).HasMaxLength(150);
         });
 
         // ---------- Membresias (tabla SQL: Membresias) ----------
@@ -111,7 +141,7 @@ public class FunStudiosContext : DbContext
         {
             entity.HasKey(eh => eh.EntradaId);
             entity.Property(eh => eh.FechaHoraEntrada).IsRequired();
-            entity.Property(eh => eh.TutorNombre).HasMaxLength(150);
+            entity.Property(eh => eh.TutorNombre).HasMaxLength(300);
             entity.Property(eh => eh.TutorTelefono).HasMaxLength(20);
 
             entity.HasOne(eh => eh.Familia)

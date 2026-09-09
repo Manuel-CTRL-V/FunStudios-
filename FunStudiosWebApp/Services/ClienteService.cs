@@ -10,15 +10,19 @@ public class ClienteService : IClienteService
 {
     private readonly FunStudiosContext _context;
     private readonly IBiometriaService _biometria;
+    private readonly IConfiguracionService _configuracion;
 
-    public ClienteService(FunStudiosContext context, IBiometriaService biometria)
+    public ClienteService(FunStudiosContext context, IBiometriaService biometria, IConfiguracionService configuracion)
     {
         _context = context;
         _biometria = biometria;
+        _configuracion = configuracion;
     }
 
     public async Task<List<ClienteListadoItemViewModel>> ObtenerListadoAsync(string? busqueda, string? estado)
     {
+        var checksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync();
+
         var consulta = _context.Clientes
             .Include(c => c.Familia)
             .Include(c => c.FidelidadCuenta)
@@ -29,7 +33,8 @@ public class ClienteService : IClienteService
             var texto = busqueda.Trim().ToLower();
             consulta = consulta.Where(c =>
                 c.Nombre.ToLower().Contains(texto) ||
-                c.Familia!.ApellidosFamilia.ToLower().Contains(texto));
+                c.Familia!.ApellidosFamilia.ToLower().Contains(texto) ||
+                (c.Familia!.CodigoFamilia != null && c.Familia!.CodigoFamilia.ToLower().Contains(texto)));
         }
 
         var clientes = await consulta
@@ -60,8 +65,11 @@ public class ClienteService : IClienteService
                 Inicial = c.Inicial,
                 Edad = c.Edad,
                 ApellidosFamilia = c.Familia?.ApellidosFamilia ?? string.Empty,
+                CodigoFamilia = c.Familia?.CodigoFamilia,
+                Nacionalidad = c.Nacionalidad,
                 TieneNotaMedica = !string.IsNullOrWhiteSpace(c.NotasMedicas),
                 ConteoChecks = c.FidelidadCuenta?.ConteoChecks ?? 0,
+                ChecksParaPremio = checksParaPremio,
                 EntradasGratisDisponibles = c.FidelidadCuenta?.EntradasGratisGanadas ?? 0,
                 EstaDentro = dentro,
                 UltimaEntradaTexto = FormatearUltimaEntrada(ultimasEntradas.GetValueOrDefault(c.ClienteId))
@@ -88,8 +96,11 @@ public class ClienteService : IClienteService
 
     public async Task<ClienteDetalleViewModel?> ObtenerDetalleAsync(int clienteId)
     {
+        var checksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync();
+
         var cliente = await _context.Clientes
             .Include(c => c.Familia)
+                .ThenInclude(f => f!.Tutores)
             .Include(c => c.FidelidadCuenta)
             .FirstOrDefaultAsync(c => c.ClienteId == clienteId);
 
@@ -121,15 +132,26 @@ public class ClienteService : IClienteService
             FechaNacimiento = cliente.FechaNacimiento,
             Edad = cliente.Edad,
             NotasMedicas = cliente.NotasMedicas,
+            Nacionalidad = cliente.Nacionalidad,
             HuellaEnrolada = cliente.HuellaNinoTemplate != null,
-            HuellaTutorEnrolada = cliente.Familia?.HuellaTutorTemplate != null,
+            HuellaTutorEnrolada = cliente.Familia?.Tutores.Any(t => t.HuellaTemplate != null) ?? false,
             FamiliaId = cliente.FamiliaId,
             ApellidosFamilia = cliente.Familia?.ApellidosFamilia ?? string.Empty,
-            NombreTutor1 = cliente.Familia?.NombreTutor1,
-            TelefonoTutor1 = cliente.Familia?.TelefonoTutor1 ?? string.Empty,
-            NombreTutor2 = cliente.Familia?.NombreTutor2,
-            TelefonoTutor2 = cliente.Familia?.TelefonoTutor2,
+            CodigoFamilia = cliente.Familia?.CodigoFamilia,
+            Tutores = (cliente.Familia?.Tutores ?? new List<Tutor>())
+                .OrderByDescending(t => t.EsPrincipal)
+                .ThenBy(t => t.TutorId)
+                .Select(t => new TutorViewModel
+                {
+                    TutorId = t.TutorId,
+                    Nombre = t.Nombre,
+                    Telefono = t.Telefono,
+                    EsPrincipal = t.EsPrincipal,
+                    HuellaEnrolada = t.HuellaTemplate != null
+                })
+                .ToList(),
             ConteoChecks = cliente.FidelidadCuenta?.ConteoChecks ?? 0,
+            ChecksParaPremio = checksParaPremio,
             EntradasGratisDisponibles = cliente.FidelidadCuenta?.EntradasGratisGanadas ?? 0,
             FechaUltimaActualizacionFidelidad = cliente.FidelidadCuenta?.FechaUltimaActualizacion,
             EstaDentro = estaDentro,
@@ -145,6 +167,7 @@ public class ClienteService : IClienteService
                 TipoAccesoId = eh.TipoAccesoId,
                 TutorNombre = eh.TutorNombre,
                 TutorTelefono = eh.TutorTelefono,
+                Acompanantes = eh.Acompanantes,
                 MontoVenta = eh.Venta?.Monto
             }).ToList(),
             Membresias = cliente.Membresias
@@ -180,7 +203,11 @@ public class ClienteService : IClienteService
             .Select(f => new FamiliaOpcionViewModel
             {
                 FamiliaId = f.FamiliaId,
-                Etiqueta = $"Familia {f.ApellidosFamilia}"
+                ApellidosFamilia = f.ApellidosFamilia,
+                CodigoFamilia = f.CodigoFamilia,
+                Etiqueta = string.IsNullOrWhiteSpace(f.CodigoFamilia)
+                    ? $"Familia {f.ApellidosFamilia}"
+                    : $"Familia {f.ApellidosFamilia} · {f.CodigoFamilia}"
             })
             .ToListAsync();
     }
@@ -212,7 +239,9 @@ public class ClienteService : IClienteService
 
         if (modelo.UsarFamiliaExistente)
         {
-            var familiaExistente = await _context.Familias.FindAsync(modelo.FamiliaExistenteId ?? 0);
+            var familiaExistente = await _context.Familias
+                .Include(f => f.Tutores)
+                .FirstOrDefaultAsync(f => f.FamiliaId == (modelo.FamiliaExistenteId ?? 0));
             if (familiaExistente == null)
                 return (false, "Seleccione una familia válida.", 0);
             familia = familiaExistente;
@@ -227,11 +256,28 @@ public class ClienteService : IClienteService
             familia = new Familia
             {
                 ApellidosFamilia = modelo.ApellidosFamilia.Trim(),
-                NombreTutor1 = string.IsNullOrWhiteSpace(modelo.NombreTutor1) ? null : modelo.NombreTutor1.Trim(),
-                TelefonoTutor1 = modelo.TelefonoTutor1.Trim(),
-                NombreTutor2 = string.IsNullOrWhiteSpace(modelo.NombreTutor2) ? null : modelo.NombreTutor2.Trim(),
-                TelefonoTutor2 = string.IsNullOrWhiteSpace(modelo.TelefonoTutor2) ? null : modelo.TelefonoTutor2.Trim()
+                CodigoFamilia = await GenerarCodigoFamiliaAsync(),
+                Tutores = new List<Tutor>
+                {
+                    new()
+                    {
+                        Nombre = string.IsNullOrWhiteSpace(modelo.NombreTutor1) ? "Tutor 1" : modelo.NombreTutor1.Trim(),
+                        Telefono = modelo.TelefonoTutor1.Trim(),
+                        EsPrincipal = true
+                    }
+                }
             };
+
+            // Segundo tutor opcional al crear la familia
+            if (!string.IsNullOrWhiteSpace(modelo.TelefonoTutor2))
+            {
+                familia.Tutores.Add(new Tutor
+                {
+                    Nombre = string.IsNullOrWhiteSpace(modelo.NombreTutor2) ? "Tutor 2" : modelo.NombreTutor2.Trim(),
+                    Telefono = modelo.TelefonoTutor2.Trim(),
+                    EsPrincipal = false
+                });
+            }
             _context.Familias.Add(familia);
         }
 
@@ -240,6 +286,7 @@ public class ClienteService : IClienteService
             Nombre = modelo.Nombre.Trim(),
             FechaNacimiento = modelo.FechaNacimiento.Value,
             NotasMedicas = string.IsNullOrWhiteSpace(modelo.NotasMedicas) ? null : modelo.NotasMedicas.Trim(),
+            Nacionalidad = string.IsNullOrWhiteSpace(modelo.Nacionalidad) ? null : modelo.Nacionalidad.Trim(),
             HuellaNinoTemplate = templateNino,
             Familia = familia
         };
@@ -265,12 +312,19 @@ public class ClienteService : IClienteService
             try
             {
                 var templateTutor = Convert.FromBase64String(modelo.HuellaTutorTemplateBase64);
-                var duplicadoTutor = await _context.Familias.AnyAsync(f =>
-                    f.HuellaTutorTemplate != null && f.HuellaTutorTemplate.SequenceEqual(templateTutor));
+                var duplicadoTutor = await _context.Tutores.AnyAsync(t =>
+                    t.HuellaTemplate != null && t.HuellaTemplate.SequenceEqual(templateTutor));
                 if (duplicadoTutor)
                     return (false, "Esta huella de tutor ya está registrada en el sistema.", cliente.ClienteId);
 
-                familia.HuellaTutorTemplate = templateTutor;
+                // Se asigna al tutor principal de la familia (RF4); si no hay principal,
+                // se usa el primer tutor registrado
+                var tutorConHuella = familia.Tutores.FirstOrDefault(t => t.EsPrincipal)
+                                     ?? familia.Tutores.FirstOrDefault();
+                if (tutorConHuella == null)
+                    return (false, "La familia no tiene tutores registrados para guardar la huella.", cliente.ClienteId);
+
+                tutorConHuella.HuellaTemplate = templateTutor;
                 await _context.SaveChangesAsync();
             }
             catch (FormatException)
@@ -281,7 +335,8 @@ public class ClienteService : IClienteService
 
         await _biometria.RegistrarEventoAsync("Enrolamiento",
             $"Enrolamiento completado para '{cliente.Nombre}' ({familia.ApellidosFamilia}). " +
-            $"Huella niño: OK. Huella tutor: {(familia.HuellaTutorTemplate != null ? "OK" : "No aplicable")}.",
+            $"Huella niño: OK. " +
+            $"Huella tutor: {(familia.Tutores.Any(t => t.HuellaTemplate != null) ? "OK" : "No aplicable")}.",
             "Info", usuarioId, cliente.ClienteId, ip);
 
         return (true, $"Cliente '{cliente.Nombre}' registrado y enrolado correctamente.", cliente.ClienteId);
@@ -290,7 +345,6 @@ public class ClienteService : IClienteService
     public async Task<(bool Exito, string Mensaje)> ActualizarAsync(ClienteEditarViewModel modelo)
     {
         var cliente = await _context.Clientes
-            .Include(c => c.Familia)
             .FirstOrDefaultAsync(c => c.ClienteId == modelo.ClienteId);
 
         if (cliente == null)
@@ -305,16 +359,33 @@ public class ClienteService : IClienteService
         cliente.Nombre = modelo.Nombre.Trim();
         cliente.FechaNacimiento = modelo.FechaNacimiento.Value;
         cliente.NotasMedicas = string.IsNullOrWhiteSpace(modelo.NotasMedicas) ? null : modelo.NotasMedicas.Trim();
-
-        if (cliente.Familia != null)
-        {
-            cliente.Familia.NombreTutor1 = string.IsNullOrWhiteSpace(modelo.NombreTutor1) ? null : modelo.NombreTutor1.Trim();
-            cliente.Familia.TelefonoTutor1 = modelo.TelefonoTutor1.Trim();
-            cliente.Familia.NombreTutor2 = string.IsNullOrWhiteSpace(modelo.NombreTutor2) ? null : modelo.NombreTutor2.Trim();
-            cliente.Familia.TelefonoTutor2 = string.IsNullOrWhiteSpace(modelo.TelefonoTutor2) ? null : modelo.TelefonoTutor2.Trim();
-        }
+        cliente.Nacionalidad = string.IsNullOrWhiteSpace(modelo.Nacionalidad) ? null : modelo.Nacionalidad.Trim();
 
         await _context.SaveChangesAsync();
         return (true, "Datos actualizados correctamente.");
+    }
+
+    /// <summary>
+    /// Genera el siguiente código de familia "FAM-001" secuencial tomando el máximo
+    /// numérico existente y sumando 1 (el índice único de la BD evita duplicados).
+    /// </summary>
+    private async Task<string> GenerarCodigoFamiliaAsync()
+    {
+        var codigos = await _context.Familias
+            .Where(f => f.CodigoFamilia != null)
+            .Select(f => f.CodigoFamilia!)
+            .ToListAsync();
+
+        var maximo = 0;
+        foreach (var codigo in codigos)
+        {
+            if (int.TryParse(codigo.StartsWith("FAM-", StringComparison.OrdinalIgnoreCase)
+                    ? codigo[4..] : null, out var numero) && numero > maximo)
+            {
+                maximo = numero;
+            }
+        }
+
+        return $"FAM-{maximo + 1:000}";
     }
 }

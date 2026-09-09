@@ -65,6 +65,7 @@
                     <th class="px-gutter py-stack-md font-semibold">Niño</th>
                     <th class="px-gutter py-stack-md font-semibold">Tipo de acceso</th>
                     <th class="px-gutter py-stack-md font-semibold">Tutor responsable</th>
+                    <th class="px-gutter py-stack-md font-semibold">Acompañantes</th>
                     <th class="px-gutter py-stack-md font-semibold">Salida</th>
                     <th class="px-gutter py-stack-md font-semibold">Duración</th>
                     <th class="px-gutter py-stack-md font-semibold text-right pr-6">Pago</th>
@@ -73,7 +74,7 @@
             <tbody>
                 @if (!Model.Entradas.Any())
                 {
-                    <tr><td colspan="7" class="px-gutter py-gutter text-center text-outline">No hay registros para los filtros aplicados.</td></tr>
+                    <tr><td colspan="8" class="px-gutter py-gutter text-center text-outline">No hay registros para los filtros aplicados.</td></tr>
                 }
                 @foreach (var e in Model.Entradas)
                 {
@@ -85,10 +86,19 @@
                         </td>
                         <td class="px-gutter py-stack-md">@e.TipoAccesoNombre</td>
                         <td class="px-gutter py-stack-md text-on-surface-variant">@(string.IsNullOrWhiteSpace(e.TutorNombre) ? "—" : e.TutorNombre)</td>
+                        <td class="px-gutter py-stack-md text-center text-on-surface-variant">@e.Acompanantes</td>
                         <td class="px-gutter py-stack-md whitespace-nowrap">
                             @if (e.EstaDentro)
                             {
                                 <span class="font-label-sm px-3 py-1 rounded-full bg-tertiary-container/10 text-tertiary border border-tertiary/20">Dentro</span>
+                                <form asp-controller="Acceso" asp-action="MarcarSalida" asp-route-id="@e.ClienteId" asp-route-retorno="bitacora"
+                                      method="post" class="mt-1 inline-block">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit"
+                                            class="flex items-center gap-1 px-3 py-1 rounded-full bg-secondary text-on-secondary font-label-sm hover:bg-secondary-container btn-press transition-all cursor-pointer">
+                                        <span class="material-symbols-outlined text-[14px]">logout</span> Marcar salida
+                                    </button>
+                                </form>
                             }
                             else
                             {

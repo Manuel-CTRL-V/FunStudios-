@@ -41,8 +41,10 @@ builder.Services.AddScoped<IBiometriaService>(sp => sp.GetRequiredService<ApiBio
 
 builder.Services.AddScoped<IAccesoService, AccesoService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IFamiliaService, FamiliaService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
 
 // Autenticación por cookies con roles (RF11)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

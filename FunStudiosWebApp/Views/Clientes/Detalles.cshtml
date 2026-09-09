@@ -9,17 +9,35 @@
         <div class="w-16 h-16 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-black text-headline-md">@Model.Inicial</div>
         <div>
             <h2 class="text-headline-lg text-on-background leading-tight">@Model.Nombre</h2>
-            <p class="text-body-md text-on-surface-variant">Familia @Model.ApellidosFamilia · @Model.Edad años · Nacido el @Model.FechaNacimiento.ToString("dd/MM/yyyy")</p>
+            <p class="text-body-md text-on-surface-variant">
+                Familia @Model.ApellidosFamilia · @Model.Edad años · Nacido el @Model.FechaNacimiento.ToString("dd/MM/yyyy")
+                @if (!string.IsNullOrWhiteSpace(Model.Nacionalidad))
+                {
+                    <text>· @Model.Nacionalidad</text>
+                }
+            </p>
         </div>
         <span class="ml-stack-sm font-label-sm px-3 py-1 rounded-full border @(Model.EstaDentro ? "bg-tertiary-container/10 text-tertiary border-tertiary/20" : "bg-surface-variant/50 text-on-surface-variant border-outline-variant/30")">
             @(Model.EstaDentro ? "Dentro del parque" : "Fuera")
         </span>
     </div>
 
+<div class="flex items-center gap-stack-md self-start flex-wrap">
+    @if (Model.EstaDentro)
+    {
+        <form asp-controller="Acceso" asp-action="MarcarSalida" asp-route-id="@Model.ClienteId" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="flex items-center gap-2 px-6 py-2 bg-secondary text-on-secondary font-label-lg rounded-full hover:bg-secondary-container btn-press transition-all shadow-soft cursor-pointer">
+                <span class="material-symbols-outlined">logout</span> Registrar salida
+            </button>
+        </form>
+    }
     <a asp-controller="Clientes" asp-action="Editar" asp-route-id="@Model.ClienteId"
-       class="self-start flex items-center gap-2 px-6 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all shadow-soft">
+       class="flex items-center gap-2 px-6 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all shadow-soft">
         <span class="material-symbols-outlined">edit</span> Editar datos
     </a>
+</div>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Model.NotasMedicas))
@@ -44,12 +62,12 @@
                 <span class="material-symbols-outlined text-secondary-container">stars</span> Progreso de Fidelidad
             </h3>
             <div class="flex flex-wrap gap-0.5 mb-stack-md">
-                @for (var i = 1; i <= 8; i++)
+                @for (var i = 1; i <= Model.ChecksParaPremio; i++)
                 {
                     <span class="material-symbols-outlined @(i <= Model.ConteoChecks ? "text-secondary" : "text-outline-variant")">star</span>
                 }
             </div>
-            <p class="font-label-lg text-on-surface">@Model.ConteoChecks de 8 checks</p>
+            <p class="font-label-lg text-on-surface">@Model.ConteoChecks de @Model.ChecksParaPremio checks</p>
             <p class="font-label-sm text-on-surface-variant">
                 @if (Model.ConteoChecks == 0 && Model.EntradasGratisDisponibles == 0)
                 {
@@ -57,7 +75,7 @@
                 }
                 else if (Model.ConteoChecks > 0)
                 {
-                    <text>Faltan @Math.Max(0, 8 - Model.ConteoChecks) visita(s) para ganar una entrada gratis.</text>
+                    <text>Faltan @Math.Max(0, Model.ChecksParaPremio - Model.ConteoChecks) visita(s) para ganar una entrada gratis.</text>
                 }
                 else
                 {
@@ -80,23 +98,28 @@
                 <span class="material-symbols-outlined text-primary-container">family_restroom</span> Datos de la Familia
             </h3>
             <ul class="flex flex-col gap-stack-sm text-body-md">
-                <li class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">badge</span> Familia @Model.ApellidosFamilia</li>
                 <li class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary text-[18px]">person</span>
-                    <span>
-                        <span class="font-bold">@(Model.NombreTutor1 ?? "Tutor 1")</span>
-                        <span class="text-on-surface-variant ml-1">· @Model.TelefonoTutor1</span>
-                    </span>
+                    <span class="material-symbols-outlined text-primary text-[18px]">badge</span>
+                    Familia @Model.ApellidosFamilia
+                    <span class="font-label-sm text-primary bg-primary/10 px-2 py-0.5 rounded-full">@(Model.CodigoFamilia ?? "—")</span>
                 </li>
-                @if (!string.IsNullOrWhiteSpace(Model.NombreTutor2) || !string.IsNullOrWhiteSpace(Model.TelefonoTutor2))
+                @if (!Model.Tutores.Any())
+                {
+                    <li class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[18px]">person_off</span>
+                        <span class="text-on-surface-variant">Sin tutores registrados</span>
+                    </li>
+                }
+                @foreach (var tutor in Model.Tutores)
                 {
                     <li class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary text-[18px]">person</span>
                         <span>
-                            <span class="font-bold">@(Model.NombreTutor2 ?? "Tutor 2")</span>
-                            @if (!string.IsNullOrWhiteSpace(Model.TelefonoTutor2))
+                            <span class="font-bold">@tutor.Nombre</span>
+                            <span class="text-on-surface-variant ml-1">· @tutor.Telefono</span>
+                            @if (tutor.EsPrincipal)
                             {
-                                <span class="text-on-surface-variant ml-1">· @Model.TelefonoTutor2</span>
+                                <span class="font-label-sm text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-1">principal</span>
                             }
                         </span>
                     </li>
@@ -132,6 +155,7 @@
                             <th class="px-gutter py-stack-md font-semibold">Entrada</th>
                             <th class="px-gutter py-stack-md font-semibold">Salida</th>
                             <th class="px-gutter py-stack-md font-semibold">Tipo</th>
+                            <th class="px-gutter py-stack-md font-semibold">Acompañantes</th>
                             <th class="px-gutter py-stack-md font-semibold">Duración</th>
                             <th class="px-gutter py-stack-md font-semibold text-right">Pago</th>
                         </tr>
@@ -139,7 +163,7 @@
                     <tbody>
                         @if (!Model.EntradasRecientes.Any())
                         {
-                            <tr><td colspan="5" class="px-gutter py-gutter text-center text-outline">Sin visitas registradas todavía.</td></tr>
+                            <tr><td colspan="6" class="px-gutter py-gutter text-center text-outline">Sin visitas registradas todavía.</td></tr>
                         }
                         @foreach (var e in Model.EntradasRecientes)
                         {
@@ -156,6 +180,7 @@
                                     }
                                 </td>
                                 <td class="px-gutter py-stack-md">@e.TipoAccesoNombre</td>
+                                <td class="px-gutter py-stack-md text-on-surface-variant">@e.Acompanantes</td>
                                 <td class="px-gutter py-stack-md text-on-surface-variant">@e.DuracionTexto</td>
                                 <td class="px-gutter py-stack-md text-right">@(e.MontoVenta?.ToString("C0") ?? "—")</td>
                             </tr>

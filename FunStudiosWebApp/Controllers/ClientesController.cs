@@ -42,12 +42,15 @@ public class ClientesController : Controller
         return View(cliente);
     }
 
-    // GET: /Clientes/Crear
-    public async Task<IActionResult> Crear()
+// GET: /Clientes/Crear
+    public async Task<IActionResult> Crear(int? familiaId)
     {
+        var familias = await _clienteService.ObtenerFamiliasAsync();
         var modelo = new ClienteCrearViewModel
         {
-            FamiliasExistentes = await _clienteService.ObtenerFamiliasAsync()
+            FamiliasExistentes = familias,
+            UsarFamiliaExistente = familiaId != null,
+            FamiliaExistenteId = familiaId
         };
         return View(modelo);
     }
@@ -83,10 +86,8 @@ public class ClientesController : Controller
             Nombre = detalle.Nombre,
             FechaNacimiento = detalle.FechaNacimiento,
             NotasMedicas = detalle.NotasMedicas,
-            NombreTutor1 = detalle.NombreTutor1,
-            TelefonoTutor1 = detalle.TelefonoTutor1,
-            NombreTutor2 = detalle.NombreTutor2,
-            TelefonoTutor2 = detalle.TelefonoTutor2
+            Nacionalidad = detalle.Nacionalidad,
+            FamiliaId = detalle.FamiliaId
         });
     }
 

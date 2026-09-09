@@ -65,6 +65,11 @@
                         </div>
                     </div>
 
+                    <div id="result-checks-hoy" class="hidden items-center justify-center gap-1 bg-surface-container-low rounded-full px-stack-md py-unit font-label-sm text-on-surface-variant">
+                        <span class="material-symbols-outlined text-[16px]">today</span>
+                        <span id="result-checks-hoy-txt"></span>
+                    </div>
+
                     <!-- Nota médica -->
                     <div id="result-nota" class="hidden items-start gap-2 bg-surface-container-high border-l-8 border-[#ffb300] px-gutter py-3 rounded-lg">
                         <span class="material-symbols-outlined text-[#b26a00]">medical_information</span>
@@ -103,27 +108,15 @@
                         </div>
 
                         <div class="flex flex-col gap-stack-sm">
-                            <label class="font-label-sm text-on-surface-variant ml-4">¿Con quién ingresó el niño?</label>
-                            <div class="flex flex-col gap-2" id="tutor-radios">
-                                <label class="flex items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors">
-                                    <input type="radio" name="seleccion-tutor" value="tutor1" checked onchange="toggleTutorOtro()" class="accent-[#0077ce]" />
-                                    <span class="flex-1">
-                                        <span class="block font-label-lg text-on-surface" id="lbl-tutor1">Tutor 1</span>
-                                        <span class="block font-label-sm text-on-surface-variant" id="tel-tutor1"></span>
-                                    </span>
-                                </label>
-                                <label id="opt-tutor2" class="hidden items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors">
-                                    <input type="radio" name="seleccion-tutor" value="tutor2" onchange="toggleTutorOtro()" class="accent-[#0077ce]" />
-                                    <span class="flex-1">
-                                        <span class="block font-label-lg text-on-surface" id="lbl-tutor2">Tutor 2</span>
-                                        <span class="block font-label-sm text-on-surface-variant" id="tel-tutor2"></span>
-                                    </span>
-                                </label>
-                                <label class="flex items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors">
-                                    <input type="radio" name="seleccion-tutor" value="otro" onchange="toggleTutorOtro()" class="accent-[#0077ce]" />
-                                    <span class="font-label-lg text-on-surface">Otro acompañante no registrado</span>
-                                </label>
+                            <label class="font-label-sm text-on-surface-variant ml-4">¿Quiénes acompañaron al niño?</label>
+                            <div class="flex flex-col gap-2" id="tutor-checks">
+                                <!-- los tutores de la familia se pintan dinámicamente -->
                             </div>
+
+                            <label class="flex items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors">
+                                <input type="checkbox" id="chk-otro" onchange="toggleTutorOtro()" class="accent-[#0077ce]" />
+                                <span class="font-label-lg text-on-surface">Acompañante no registrado (abuela, tía...)</span>
+                            </label>
 
                             <!-- Campos para acompañante no registrado -->
                             <div id="tutor-otro-campos" class="hidden flex-col gap-stack-sm mt-unit pl-stack-md border-l-2 border-outline-variant/30">
@@ -137,6 +130,14 @@
                                     <input id="tutor-otro-telefono" placeholder="8090000000" type="tel" inputmode="numeric" maxlength="12" oninput="formatTelefono(this)"
                                            class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none placeholder:text-outline-variant" />
                                 </div>
+                            </div>
+
+                            <!-- Cantidad de acompañantes (incluye tutores) -->
+                            <div class="flex flex-col gap-1 mt-unit">
+                                <label for="acompanantes" class="font-label-sm text-on-surface-variant ml-4">Cantidad de acompañantes <b>(incluye tutores)</b></label>
+                                <input id="acompanantes" type="number" min="0" value="0" oninput="onInputAcompanantes()"
+                                       class="bg-surface-container border-2 border-transparent focus:border-primary rounded-full px-4 py-3 focus:outline-none" />
+                                <span class="font-label-sm text-on-surface-variant ml-4">Se actualiza con cada tutor marcado; súbelo para acompañantes extra no listados.</span>
                             </div>
                         </div>
 
@@ -251,7 +252,7 @@
         </div>
         <h3 class="text-headline-md text-secondary">¡Entrada Gratis Ganada!</h3>
         <p class="text-body-lg text-on-surface-variant mt-stack-sm">
-            <b id="premio-nombre"></b> completó sus 8 visitas.
+            <b id="premio-nombre"></b> completó sus @Model.ChecksParaPremio visitas.
             Se acreditó <b>1 entrada gratis</b> y su ciclo de fidelidad reinició a 0 checks.
         </p>
         <button type="button" onclick="cerrarPremio()"
@@ -310,7 +311,8 @@
         }, 700);
     }
 
-    function estrellas(conteo, total = 8) {
+    function estrellas(conteo, total) {
+        total = total || 8;
         let html = '';
         for (let i = 1; i <= total; i++) {
             html += `<span class="material-symbols-outlined ${i <= conteo ? 'text-secondary' : 'text-outline-variant'}" style="font-size:18px;">star</span>`;
@@ -337,7 +339,16 @@
         document.getElementById('result-nombre').textContent = `${data.nombre} · ${data.edad} años`;
         document.getElementById('result-familia').textContent = `Familia ${data.apellidosFamilia}`;
         document.getElementById('result-edad').textContent = `${data.edad} años`;
-        document.getElementById('result-checks').innerHTML = estrellas(data.conteoChecks);
+        document.getElementById('result-checks').innerHTML = estrellas(data.conteoChecks, data.checksParaPremio);
+
+        const checksHoyBox = document.getElementById('result-checks-hoy');
+        if (typeof data.checksSumadosHoy === 'number') {
+            document.getElementById('result-checks-hoy-txt').textContent =
+                `Checks sumados hoy: ${data.checksSumadosHoy} de ${data.checksPorDia}`;
+            checksHoyBox.classList.remove('hidden'); checksHoyBox.classList.add('flex');
+        } else {
+            checksHoyBox.classList.add('hidden'); checksHoyBox.classList.remove('flex');
+        }
 
         const notaBox = document.getElementById('result-nota');
         if (data.notasMedicas) {
@@ -394,37 +405,62 @@
     }
 
     function toggleTutorOtro() {
-        const esOtro = document.querySelector('input[name="seleccion-tutor"]:checked')?.value === 'otro';
+        const esOtro = document.getElementById('chk-otro').checked;
         document.getElementById('tutor-otro-campos').classList.toggle('hidden', !esOtro);
         document.getElementById('tutor-otro-campos').classList.toggle('flex', esOtro);
+        recalcularAcompanantes();
+    }
+
+    // Acompañantes extra que el usuario escribe a mano sobre el mínimo de tutores.
+    let ajusteManual = 0;
+
+    function baseAcompanantes() {
+        return document.querySelectorAll('.tutor-check:checked').length +
+            (document.getElementById('chk-otro').checked ? 1 : 0);
+    }
+
+    function onInputAcompanantes() {
+        const input = document.getElementById('acompanantes');
+        ajusteManual = Math.max(0, (input.valueAsNumber || 0) - baseAcompanantes());
+    }
+
+    function recalcularAcompanantes() {
+        const input = document.getElementById('acompanantes');
+        input.value = baseAcompanantes() + ajusteManual;
     }
 
     function pintarTutores(data) {
-        // Tutor 1 siempre se muestra
-        document.getElementById('lbl-tutor1').textContent = data.nombreTutor1 || 'Tutor 1';
-        document.getElementById('tel-tutor1').textContent = data.telefonoTutor1 || '';
+        const cont = document.getElementById('tutor-checks');
+        cont.innerHTML = '';
 
-        // Tutor 2: solo si existe
-        const optT2 = document.getElementById('opt-tutor2');
-        if (data.nombreTutor2 || data.telefonoTutor2) {
-            document.getElementById('lbl-tutor2').textContent = data.nombreTutor2 || 'Tutor 2';
-            document.getElementById('tel-tutor2').textContent = data.telefonoTutor2 || '';
-            optT2.classList.remove('hidden');
-            optT2.classList.add('flex');
-        } else {
-            optT2.classList.add('hidden');
-            optT2.classList.remove('flex');
+        (data.tutores || []).forEach(t => {
+            const label = document.createElement('label');
+            label.className = 'flex items-center gap-stack-sm border-2 border-surface-variant hover:border-primary rounded-lg p-stack-sm cursor-pointer transition-colors';
+            label.innerHTML = `
+                <input type="checkbox" class="tutor-check accent-[#0077ce]" value="${t.tutorId}" ${t.esPrincipal ? 'checked' : ''} onchange="recalcularAcompanantes()" />
+                <span class="flex-1">
+                    <span class="block font-label-lg text-on-surface">${t.nombre}</span>
+                    <span class="block font-label-sm text-on-surface-variant">${t.telefono || ''}${t.esPrincipal ? ' · principal' : ''}</span>
+                </span>`;
+            cont.appendChild(label);
+        });
+
+        if ((data.tutores || []).length === 0) {
+            cont.innerHTML = '<p class="font-label-sm text-on-surface-variant">Esta familia aún no tiene tutores registrados.</p>';
         }
 
-        // Reset a tutor 1
-        document.querySelector('input[name="seleccion-tutor"][value="tutor1"]').checked = true;
+        document.getElementById('chk-otro').checked = false;
+        ajusteManual = 0;
         toggleTutorOtro();
+        recalcularAcompanantes();
     }
 
     async function registrarEntrada(ev) {
         ev.preventDefault();
         const sel = document.querySelector('input[name="tipo-acceso"]:checked');
-        const tutorSel = document.querySelector('input[name="seleccion-tutor"]:checked')?.value || 'tutor1';
+        const tutorIds = Array.from(document.querySelectorAll('.tutor-check:checked')).map(c => parseInt(c.value));
+        const conOtro = document.getElementById('chk-otro').checked;
+        const baseAcomp = tutorIds.length + (conOtro ? 1 : 0);
 
         const body = {
             clienteId: window.clienteActual.clienteId,
@@ -432,11 +468,10 @@
             metodoPagoId: sel.dataset.requierePago === 'true'
                 ? parseInt(document.getElementById('metodo-pago').value) || null : null,
             monto: parseInt(document.getElementById('monto').value) || 0,
-            seleccionTutor: tutorSel,
-            tutorOtroNombre: tutorSel === 'otro'
-                ? document.getElementById('tutor-otro-nombre').value || null : null,
-            tutorOtroTelefono: tutorSel === 'otro'
-                ? document.getElementById('tutor-otro-telefono').value || null : null
+            tutorIds: tutorIds,
+            acompanantes: parseInt(document.getElementById('acompanantes').value) || baseAcomp,
+            tutorOtroNombre: conOtro ? document.getElementById('tutor-otro-nombre').value || null : null,
+            tutorOtroTelefono: conOtro ? document.getElementById('tutor-otro-telefono').value || null : null
         };
 
         const data = await postJson('/Acceso/RegistrarEntrada', body);

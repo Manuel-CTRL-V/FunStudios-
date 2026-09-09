@@ -31,14 +31,55 @@ public static class FunStudiosSeeder
             new Rol { RolId = Rol.Recepcion, NombreRol = "Recepción" });
 
         context.TiposAcceso.AddRange(
-            new TipoAcceso { TipoAccesoId = TipoAcceso.DayPass, NombreAcceso = "Day Pass" },
-            new TipoAcceso { TipoAccesoId = TipoAcceso.FidelidadGratis, NombreAcceso = "Fidelidad Gratis" },
-            new TipoAcceso { TipoAccesoId = TipoAcceso.Membresia, NombreAcceso = "Membresía" });
+            new TipoAcceso
+            {
+                TipoAccesoId = TipoAcceso.DayPass, NombreAcceso = "Day Pass",
+                Precio = 400.00m, Activo = true,
+                Descripcion = "Entrada de un día (pago de $400 RD$)."
+            },
+            new TipoAcceso
+            {
+                TipoAccesoId = TipoAcceso.FidelidadGratis, NombreAcceso = "Fidelidad Gratis",
+                Precio = 0.00m, Activo = true,
+                Descripcion = "Entrada gratis acumulada por fidelidad (sin pago)."
+            },
+            new TipoAcceso
+            {
+                TipoAccesoId = TipoAcceso.Membresia, NombreAcceso = "Membresía",
+                Precio = 0.00m, Activo = true,
+                Descripcion = "Entrada incluida en una membresía vigente (sin pago)."
+            });
 
         context.MetodosPago.AddRange(
             new MetodoPago { MetodoPagoId = 1, NombreMetodo = "Efectivo" },
             new MetodoPago { MetodoPagoId = 2, NombreMetodo = "Tarjeta" },
             new MetodoPago { MetodoPagoId = 3, NombreMetodo = "Transferencia" });
+
+        context.Parametros.AddRange(
+            new Parametro
+            {
+                Clave = "Fidelidad.ChecksParaPremio", Valor = "8",
+                Descripcion = "Cantidad de visitas (Day Pass) necesarias para ganar una entrada gratis.",
+                Tipo = "numero", NombreVisible = "Checks para premio de fidelidad"
+            },
+            new Parametro
+            {
+                Clave = "Fidelidad.ChecksPorDia", Valor = "1",
+                Descripcion = "Cantidad máxima de checks que un niño puede sumar por entradas Day Pass dentro de un mismo día.",
+                Tipo = "numero", NombreVisible = "Checks máximos por día"
+            },
+            new Parametro
+            {
+                Clave = "Moneda.Simbolo", Valor = "RD$",
+                Descripcion = "Símbolo de la moneda que se muestra en toda la aplicación.",
+                Tipo = "texto", NombreVisible = "Símbolo de moneda"
+            },
+            new Parametro
+            {
+                Clave = "Parque.Nombre", Valor = "FunStudios",
+                Descripcion = "Nombre del parque que se muestra en reportes y encabezados.",
+                Tipo = "texto", NombreVisible = "Nombre del parque"
+            });
 
         await context.SaveChangesAsync();
     }
@@ -85,33 +126,46 @@ public static class FunStudiosSeeder
         {
             new()
             {
-                FamiliaId = 1, ApellidosFamilia = "Pérez-García",
-                NombreTutor1 = "Laura García",    TelefonoTutor1 = "555-0101",
-                NombreTutor2 = "Carlos Pérez",   TelefonoTutor2 = "555-0102"
+                FamiliaId = 1, ApellidosFamilia = "Pérez-García", CodigoFamilia = "FAM-001",
+                Tutores = new List<Tutor>
+                {
+                    new() { Nombre = "Laura García",   Telefono = "555-0101", EsPrincipal = true },
+                    new() { Nombre = "Carlos Pérez",   Telefono = "555-0102" }
+                }
             },
             new()
             {
-                FamiliaId = 2, ApellidosFamilia = "Rodríguez",
-                NombreTutor1 = "María Rodríguez", TelefonoTutor1 = "555-0203",
-                NombreTutor2 = null,                TelefonoTutor2 = null
+                FamiliaId = 2, ApellidosFamilia = "Rodríguez", CodigoFamilia = "FAM-002",
+                Tutores = new List<Tutor>
+                {
+                    new() { Nombre = "María Rodríguez", Telefono = "555-0203", EsPrincipal = true }
+                }
             },
             new()
             {
-                FamiliaId = 3, ApellidosFamilia = "Thompson-López",
-                NombreTutor1 = "Ana López",       TelefonoTutor1 = "555-0304",
-                NombreTutor2 = "James Thompson",  TelefonoTutor2 = "555-0305"
+                FamiliaId = 3, ApellidosFamilia = "Thompson-López", CodigoFamilia = "FAM-003",
+                Tutores = new List<Tutor>
+                {
+                    new() { Nombre = "Ana López",       Telefono = "555-0304", EsPrincipal = true },
+                    new() { Nombre = "James Thompson",  Telefono = "555-0305" }
+                }
             },
             new()
             {
-                FamiliaId = 4, ApellidosFamilia = "Kim Herrera",
-                NombreTutor1 = "Soo-Yeon Kim",    TelefonoTutor1 = "555-0406",
-                NombreTutor2 = null,                TelefonoTutor2 = null
+                FamiliaId = 4, ApellidosFamilia = "Kim Herrera", CodigoFamilia = "FAM-004",
+                Tutores = new List<Tutor>
+                {
+                    new() { Nombre = "Soo-Yeon Kim",    Telefono = "555-0406", EsPrincipal = true }
+                }
             },
             new()
             {
-                FamiliaId = 5, ApellidosFamilia = "Gómez Ruiz",
-                NombreTutor1 = "Valentina Gómez", TelefonoTutor1 = "555-0507",
-                NombreTutor2 = "Andrés Ruiz",     TelefonoTutor2 = "555-0508"
+                FamiliaId = 5, ApellidosFamilia = "Gómez Ruiz", CodigoFamilia = "FAM-005",
+                Tutores = new List<Tutor>
+                {
+                    new() { Nombre = "Valentina Gómez", Telefono = "555-0507", EsPrincipal = true },
+                    new() { Nombre = "Andrés Ruiz",     Telefono = "555-0508" }
+                }
             }
         };
 
@@ -131,22 +185,22 @@ public static class FunStudiosSeeder
         var clientes = new List<Cliente>
         {
             // Familia Pérez-García: Leo con 7/8 checks (a punto de ganar) y Ana bebé sin enrolar aún
-            new() { ClienteId = 101, FamiliaId = 1, Nombre = "Leo", FechaNacimiento = hoy.AddYears(-6).AddMonths(-3), NotasMedicas = "Alergia al maní." },
-            new() { ClienteId = 102, FamiliaId = 1, Nombre = "Ana", FechaNacimiento = hoy.AddYears(-1).AddMonths(2), NotasMedicas = null },
+            new() { ClienteId = 101, FamiliaId = 1, Nombre = "Leo", FechaNacimiento = hoy.AddYears(-6).AddMonths(-3), NotasMedicas = "Alergia al maní.", Nacionalidad = "Dominicana" },
+            new() { ClienteId = 102, FamiliaId = 1, Nombre = "Ana", FechaNacimiento = hoy.AddYears(-1).AddMonths(2), NotasMedicas = null, Nacionalidad = "Dominicana" },
 
             // Familia Rodríguez: Sofia con entrada gratis disponible y Mateo recién empezando
-            new() { ClienteId = 201, FamiliaId = 2, Nombre = "Sofía", FechaNacimiento = hoy.AddYears(-8), NotasMedicas = null },
-            new() { ClienteId = 202, FamiliaId = 2, Nombre = "Mateo", FechaNacimiento = hoy.AddYears(-4).AddDays(120), NotasMedicas = "Usa lentes." },
+            new() { ClienteId = 201, FamiliaId = 2, Nombre = "Sofía", FechaNacimiento = hoy.AddYears(-8), NotasMedicas = null, Nacionalidad = "Dominicana" },
+            new() { ClienteId = 202, FamiliaId = 2, Nombre = "Mateo", FechaNacimiento = hoy.AddYears(-4).AddDays(120), NotasMedicas = "Usa lentes.", Nacionalidad = "Venezolana" },
 
             // Familia Thompson-López: Emma con membresía activa
-            new() { ClienteId = 301, FamiliaId = 3, Nombre = "Emma", FechaNacimiento = hoy.AddYears(-7).AddMonths(6), NotasMedicas = null },
+            new() { ClienteId = 301, FamiliaId = 3, Nombre = "Emma", FechaNacimiento = hoy.AddYears(-7).AddMonths(6), NotasMedicas = null, Nacionalidad = "Estadounidense" },
 
             // Familia Kim Herrera: Daniel inactivo (no viene desde hace meses)
-            new() { ClienteId = 401, FamiliaId = 4, Nombre = "Daniel", FechaNacimiento = hoy.AddYears(-9).AddMonths(1), NotasMedicas = "Asma. Inhalador en mochila roja." },
+            new() { ClienteId = 401, FamiliaId = 4, Nombre = "Daniel", FechaNacimiento = hoy.AddYears(-9).AddMonths(1), NotasMedicas = "Asma. Inhalador en mochila roja.", Nacionalidad = "Panameña" },
 
             // Familia Gómez Ruiz: Valentina y Sebastián, clientes frecuentes
-            new() { ClienteId = 501, FamiliaId = 5, Nombre = "Valentina", FechaNacimiento = hoy.AddYears(-5).AddMonths(8), NotasMedicas = null },
-            new() { ClienteId = 502, FamiliaId = 5, Nombre = "Sebastián", FechaNacimiento = hoy.AddYears(-3).AddMonths(4), NotasMedicas = null }
+            new() { ClienteId = 501, FamiliaId = 5, Nombre = "Valentina", FechaNacimiento = hoy.AddYears(-5).AddMonths(8), NotasMedicas = null, Nacionalidad = "Dominicana" },
+            new() { ClienteId = 502, FamiliaId = 5, Nombre = "Sebastián", FechaNacimiento = hoy.AddYears(-3).AddMonths(4), NotasMedicas = null, Nacionalidad = "Dominicana" }
         };
 
         context.Clientes.AddRange(clientes);
@@ -258,7 +312,8 @@ public static class FunStudiosSeeder
                     FechaHoraSalida = horaGratis.AddHours(4),
                     TipoAccesoId = TipoAcceso.FidelidadGratis,
                     TutorNombre = tutorPorFamilia[familiaGratis].nombre,
-                    TutorTelefono = tutorPorFamilia[familiaGratis].telefono
+                    TutorTelefono = tutorPorFamilia[familiaGratis].telefono,
+                    Acompanantes = 1
                 });
             }
 
@@ -275,7 +330,8 @@ public static class FunStudiosSeeder
                     TipoAccesoId = TipoAcceso.DayPass,
                     VentaId = venta.VentaId,
                     TutorNombre = tutorPorFamilia[famId].nombre,
-                    TutorTelefono = tutorPorFamilia[famId].telefono
+                    TutorTelefono = tutorPorFamilia[famId].telefono,
+                    Acompanantes = 1
                 });
             }
             ventasHistoricas.Clear();
@@ -316,7 +372,9 @@ public static class FunStudiosSeeder
                 FechaHoraEntrada = horaEntrada,
                 TipoAccesoId = tipoAccesoId,
                 TutorNombre = tutor.nombre,
-                TutorTelefono = tutor.telefono
+                TutorTelefono = tutor.telefono,
+                // Ejemplo multi-tutor: Leo (Pérez-García) entra con Carlos + Laura, Sebastián (Gómez) con dos tutores
+                Acompanantes = clienteId is 101 or 501 ? 2 : 1
             };
 
             // El Day Pass de hoy genera su venta correspondiente (histórico básico de facturas)
@@ -349,7 +407,8 @@ public static class FunStudiosSeeder
             FechaHoraSalida = horaSebastian.AddHours(4),
             TipoAccesoId = TipoAcceso.DayPass,
             TutorNombre = "Abuela Rosa",
-            TutorTelefono = "809-555-1234"
+            TutorTelefono = "809-555-1234",
+            Acompanantes = 1
         });
 
         await context.SaveChangesAsync();

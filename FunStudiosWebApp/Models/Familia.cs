@@ -1,7 +1,8 @@
 namespace FunStudiosWebApp.Models;
 
 /// <summary>
-/// Grupo familiar. Contiene los datos de contacto de hasta dos tutores responsables (RF2).
+/// Grupo familiar. Contiene los datos de contacto de los tutores responsables (RF2),
+/// que se guardan en la tabla Tutores (una familia puede tener N tutores).
 /// Una familia puede tener varios clientes (niños).
 /// </summary>
 public class Familia
@@ -10,22 +11,16 @@ public class Familia
 
     public string ApellidosFamilia { get; set; } = string.Empty;
 
-    /// <summary>Nombre propio del tutor principal (quien normalmente acompaña al niño).</summary>
-    public string? NombreTutor1 { get; set; }
-
-    public string TelefonoTutor1 { get; set; } = string.Empty;
-
-    /// <summary>Nombre del segundo tutor, si existe.</summary>
-    public string? NombreTutor2 { get; set; }
-
-    public string? TelefonoTutor2 { get; set; }
-
     /// <summary>
-    /// Template biométrico del tutor, opcional (RF4), encriptado en producción (RNF4).
+    /// Código único de la familia en formato secuencial "FAM-001".
+    /// Se genera automáticamente al crear la familia; índice único en BD.
     /// </summary>
-    public byte[]? HuellaTutorTemplate { get; set; }
+    public string? CodigoFamilia { get; set; }
 
     // Relaciones
 
     public ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
+
+    /// <summary>Tutores de la familia (uno es el principal, marcado con EsPrincipal).</summary>
+    public ICollection<Tutor> Tutores { get; set; } = new List<Tutor>();
 }
