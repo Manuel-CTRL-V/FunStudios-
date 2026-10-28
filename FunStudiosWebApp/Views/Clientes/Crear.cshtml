@@ -294,16 +294,19 @@
         ring.disabled = true;
         ring.classList.remove('pulse-ring-wait');
         ring.style.borderColor = '#0077ce';
-        estado.textContent = 'El lector capturará 4 muestras. Coloque el dedo cada vez que se le indique...';
+        estado.textContent = 'El lector capturará ' + MUESTRAS_ENROLAMIENTO + ' muestras. Coloque el dedo cada vez que se le indique...';
 
         try {
-            const resp = await fetch('/Clientes/Enrolar?muestras=' + MUESTRAS_ENROLAMIENTO, {
+            // Llamada directa al BiometricService local (navegador -> localhost:5050)
+            const resp = await fetch('http://localhost:5050/api/biometria/enrolar', {
                 method: 'POST',
-                headers: { 'RequestVerificationToken': TOKEN }
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ muestras: MUESTRAS_ENROLAMIENTO }),
+                mode: 'cors'
             });
             const data = await resp.json();
 
-            if (!data.ok) {
+            if (!data.exitoso || !data.templateBase64) {
                 toast(data.mensaje || 'Error al enrolar la huella.', true);
                 if (barra) { relleno.style.width = '0%'; barra.classList.add('hidden'); }
                 if (instruccion) instruccion.classList.remove('hidden');
@@ -334,7 +337,7 @@
         } catch {
             if (barra) { relleno.style.width = '0%'; barra.classList.add('hidden'); }
             if (instruccion) instruccion.classList.remove('hidden');
-            toast('Error al comunicarse con el lector biométrico.', true);
+            toast('Error al comunicarse con el lector biométrico (localhost:5050).', true);
             estado.textContent = 'Esperando huella digital';
         } finally {
             ring.disabled = false;

@@ -159,4 +159,49 @@
             </div>
         </div>
     </div>
+
+    <!-- ===== Aplicación BiometricService ===== -->
+    <div class="lg:col-span-12 flex flex-col gap-gutter">
+        <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-stack-md mb-stack-md">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-on-primary-container text-sm">fingerprint</span>
+                    </div>
+                    <div>
+                        <h3 class="text-headline-sm text-on-surface">Servicio Biométrico (PC de Recepción)</h3>
+                        <p class="text-body-md text-on-surface-variant">Descarga para instalar en la PC que tenga el lector DigitalPersona</p>
+                    </div>
+                </div>
+                <a href="~/Descargas/BiometricService.zip" download
+                   class="self-start flex items-center gap-2 px-6 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint btn-press transition-all shadow-soft">
+                    <span class="material-symbols-outlined">download</span> Descargar BiometricService.zip
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                <div class="bg-surface-container-low rounded-xl p-stack-md border border-outline-variant/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-primary">admin_panel_settings</span>
+                        <p class="font-label-lg text-on-surface">Ejecutar como Administrador</p>
+                    </div>
+                    <p class="text-body-md text-on-surface-variant">Ejecutar <b>BiometricService.exe</b> con clic derecho → Ejecutar como administrador.</p>
+                </div>
+                <div class="bg-surface-container-low rounded-xl p-stack-md border border-outline-variant/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-primary">usb</span>
+                        <p class="font-label-lg text-on-surface">Lector conectado</p>
+                    </div>
+                    <p class="text-body-md text-on-surface-variant">Debe tener el lector DigitalPersona conectado por USB con sus drivers instalados.</p>
+                </div>
+                <div class="bg-surface-container-low rounded-xl p-stack-md border border-outline-variant/30">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-primary">login</span>
+                        <p class="font-label-lg text-on-surface">Sesión interactiva</p>
+                    </div>
+                    <p class="text-body-md text-on-surface-variant">Debe permanecer logueado en Windows. No funciona como Servicio de Windows en sesión 0.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

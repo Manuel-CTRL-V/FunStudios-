@@ -61,11 +61,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 var app = builder.Build();
 
-// Siembra inicial (catálogos + datos demo)
+// Siembra inicial (catálogos + admin; datos demo solo en desarrollo)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<FunStudiosContext>();
-    await FunStudiosSeeder.InicializarAsync(context);
+    var incluirDemo = app.Configuration.GetValue<bool?>("Seed:DemoData")
+        ?? app.Environment.IsDevelopment();
+    await FunStudiosSeeder.InicializarAsync(context, incluirDemo);
 }
 
 // Pipeline HTTP

@@ -1,3 +1,4 @@
+using FunStudiosWebApp.Models;
 using FunStudiosWebApp.ViewModels;
 
 namespace FunStudiosWebApp.Services;
@@ -10,6 +11,9 @@ public interface IAccesoService
 {
     /// <summary>Identifica al niño por su huella en la puerta, capturando el dedo en el lector (RF5).</summary>
     Task<ResultadoEscaneoViewModel> EscanearAsync(int? usuarioId, string ip);
+
+    /// <summary>Arma el resultado del checkpoint para un cliente ya identificado.</summary>
+    Task<ResultadoEscaneoViewModel> ObtenerResultadoClienteAsync(Cliente cliente);
 
     /// <summary>Registra la hora de entrada del cliente (RF6) aplicando las reglas de fidelidad.</summary>
     Task<ResultadoRegistroEntradaViewModel> RegistrarEntradaAsync(RegistrarEntradaRequest solicitud, int? usuarioId, string ip);

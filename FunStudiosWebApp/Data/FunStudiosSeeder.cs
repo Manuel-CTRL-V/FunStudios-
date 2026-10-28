@@ -11,21 +11,28 @@ namespace FunStudiosWebApp.Data;
 /// </summary>
 public static class FunStudiosSeeder
 {
-    public static async Task InicializarAsync(FunStudiosContext context)
+    public static async Task InicializarAsync(FunStudiosContext context, bool incluirDemo)
     {
-        // Si ya hay roles, la base ya fue sembrada.
-        if (context.Roles.Any()) return;
-
+        // Catálogos del sistema (Roles, tipos de acceso, métodos de pago, parámetros)
         await SembrarCatalogosAsync(context);
-        await SembrarUsuariosAsync(context);
-        await SembrarFamiliasYClientesAsync(context);
-        await SembrarOperacionDemoAsync(context);
 
-        await context.SaveChangesAsync();
+        // Usuario administrador inicial
+        await SembrarUsuariosAsync(context);
+
+        // Datos de demostración: solo en entornos de desarrollo
+        if (incluirDemo)
+        {
+            await SembrarUsuariosDemoAsync(context);
+            await SembrarFamiliasYClientesAsync(context);
+            await SembrarOperacionDemoAsync(context);
+        }
     }
 
     private static async Task SembrarCatalogosAsync(FunStudiosContext context)
     {
+        // Si ya hay roles, los catálogos ya fueron sembrados.
+        if (context.Roles.Any()) return;
+
         context.Roles.AddRange(
             new Rol { RolId = Rol.Administrador, NombreRol = "Administrador" },
             new Rol { RolId = Rol.Recepcion, NombreRol = "Recepción" });
@@ -86,16 +93,29 @@ public static class FunStudiosSeeder
 
     private static async Task SembrarUsuariosAsync(FunStudiosContext context)
     {
+        // Crea únicamente el administrador inicial si no existe.
+        // Cambie la contraseña al entrar por primera vez en producción.
+        if (context.Usuarios.Any(u => u.NombreUsuario == "admin")) return;
+
+        context.Usuarios.Add(new Usuario
+        {
+            Nombres = "Ana",
+            Apellidos = "Martínez",
+            NombreUsuario = "admin",
+            PasswordHash = PasswordHasher.Hash("admin123"),
+            RolId = Rol.Administrador,
+            Activo = true
+        });
+
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>Usuarios de demostración (solo entorno de desarrollo).</summary>
+    private static async Task SembrarUsuariosDemoAsync(FunStudiosContext context)
+    {
+        if (context.Usuarios.Any(u => u.NombreUsuario == "recepcion")) return;
+
         context.Usuarios.AddRange(
-            new Usuario
-            {
-                Nombres = "Ana",
-                Apellidos = "Martínez",
-                NombreUsuario = "admin",
-                PasswordHash = PasswordHasher.Hash("admin123"),
-                RolId = Rol.Administrador,
-                Activo = true
-            },
             new Usuario
             {
                 Nombres = "Carla",
@@ -120,6 +140,9 @@ public static class FunStudiosSeeder
 
     private static async Task SembrarFamiliasYClientesAsync(FunStudiosContext context)
     {
+        // Los datos demo solo se siembran si aún no hay familias.
+        if (context.Familias.Any()) return;
+
         var hoy = DateOnly.FromDateTime(DateTime.Now);
 
         var familias = new List<Familia>
@@ -257,6 +280,8 @@ public static class FunStudiosSeeder
     /// <summary>Entradas, salidas, ventas y logs para que dashboards y reportes muestren actividad realista.</summary>
     private static async Task SembrarOperacionDemoAsync(FunStudiosContext context)
     {
+        if (context.EntradasHistorial.Any()) return;
+
         var hoy = DateTime.Now.Date;
 
         var tutorPorFamilia = new Dictionary<int, (string nombre, string? telefono)>

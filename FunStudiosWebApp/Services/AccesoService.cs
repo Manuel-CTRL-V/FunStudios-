@@ -104,6 +104,12 @@ public class AccesoService : IAccesoService
     }
 
     /// <summary>Arma el estado completo del cliente para la pantalla del checkpoint.</summary>
+    public async Task<ResultadoEscaneoViewModel> ObtenerResultadoClienteAsync(Cliente cliente)
+    {
+        return await ConstruirResultadoAsync(cliente);
+    }
+
+    /// <summary>Arma el estado completo del cliente para la pantalla del checkpoint.</summary>
     private async Task<ResultadoEscaneoViewModel> ConstruirResultadoAsync(Cliente cliente)
     {
         var hoy = DateTime.Now.Date;

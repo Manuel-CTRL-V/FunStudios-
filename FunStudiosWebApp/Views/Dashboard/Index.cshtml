@@ -295,20 +295,45 @@
 
     async function escanear() {
         // El checkpoint identifica el dedo que se coloca en el lector contra la base
-        // de datos (1:N). No hay modo simulación.
+        // de datos (1:N). Navegador llama directo al BiometricService local.
         mostrar('scan-loading');
 
-        setTimeout(async () => {
-            try {
-                const data = await postJson('/Acceso/Escanear', {});
-                pintarResultado(data);
-            } catch {
-                document.getElementById('result-error-msg').textContent = 'Error al comunicarse con el lector. Verifique que el servicio biométrico esté activo.';
+        try {
+            // 1) Obtener candidatos desde el servidor
+            const respCand = await fetch('/Acceso/CandidatosHuella', { headers: { 'Accept': 'application/json' } });
+            const candData = await respCand.json();
+            if (!candData.exitoso || !candData.candidatos || candData.candidatos.length === 0) {
+                document.getElementById('result-error-msg').textContent = candData.mensaje || 'No hay huellas enroladas en el sistema.';
                 document.getElementById('result-error').classList.remove('hidden');
                 document.getElementById('result-cliente').classList.add('hidden');
                 mostrar('scan-result');
+                return;
             }
-        }, 700);
+
+            // 2) Llamar directo al BiometricService local
+            const templates = candData.candidatos.map(c => c.templateBase64);
+            const respId = await fetch('http://localhost:5050/api/biometria/identificar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ templatesBase64: templates }),
+                mode: 'cors'
+            });
+            const idData = await respId.json();
+
+            // 3) Enviar resultado al servidor para armar vista y registrar logs
+            let clienteIdResuelto = null;
+            if (idData.exitoso && idData.coincide && idData.indiceCoincidencia >= 0 && idData.indiceCoincidencia < candData.candidatos.length) {
+                clienteIdResuelto = candData.candidatos[idData.indiceCoincidencia].clienteId;
+            }
+
+            const data = await postJson('/Acceso/IdentificarResultado', { indice: idData.indiceCoincidencia, clienteIdResuelto: clienteIdResuelto });
+            pintarResultado(data);
+        } catch {
+            document.getElementById('result-error-msg').textContent = 'Error al comunicarse con el lector biométrico (localhost:5050).';
+            document.getElementById('result-error').classList.remove('hidden');
+            document.getElementById('result-cliente').classList.add('hidden');
+            mostrar('scan-result');
+        }
     }
 
     function estrellas(conteo, total) {
@@ -506,9 +531,9 @@
         location.reload();
     }
 
-    // ================= Estado en vivo del lector (polling) =================
-    // El lector no notifica a la web; aquí se consulta su estado periódicamente
-    // para que la tarjeta se actualice sola cuando se conecta/desconecta u ocupa.
+    // ================= Estado en vivo del lector (polling directo al localhost) =================
+    // El navegador llama directo al BiometricService local (PC de recepción).
+    // Ya no pasa por el servidor IIS.
     function pintarEstadoLector(estado) {
         const icono = document.getElementById('lector-icono');
         const nombre = document.getElementById('lector-nombre');
@@ -523,13 +548,16 @@
                 : 'bg-error-container text-on-error-container border border-error/20');
         badge.textContent = conectado ? 'Conectado' : 'Desconectado';
         if (conectado && estado.nombreDispositivo) nombre.textContent = estado.nombreDispositivo;
+        else if (!conectado) nombre.textContent = nombre.textContent || 'Sin lector';
         badge.dataset.ocupado = estado.ocupado ? '1' : '0';
     }
 
     async function actualizarEstadoLector() {
         try {
-            const resp = await fetch('/Dashboard/EstadoLector', {
-                headers: { 'Accept': 'application/json', 'RequestVerificationToken': TOKEN }
+            const resp = await fetch('http://localhost:5050/api/biometria/estado', {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                mode: 'cors'
             });
             if (!resp.ok) return;
             pintarEstadoLector(await resp.json());

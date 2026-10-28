@@ -1,328 +1,450 @@
-USE master;
+﻿-- =====================================================
+-- FunStudios - Esquema completo (SOLO estructura, sin datos)
+-- Generado desde la base real (localhost\FunStudios) con SMO.
+-- Las tablas se ordenan para que las claves foraneas
+-- se creen despues de las tablas que referencian.
+--
+-- Antes de ejecutar, seleccione la base destino, por ejemplo:
+--   USE [FunStudios];
+-- =====================================================
+
+-- ---------- Tabla: Familias ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Familias](
+	[FamiliaId] [int] IDENTITY(1,1) NOT NULL,
+	[ApellidosFamilia] [nvarchar](150) NOT NULL,
+	[CodigoFamilia] [nvarchar](20) NULL,
+ CONSTRAINT [PK_Familias] PRIMARY KEY CLUSTERED 
+(
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
+
+GO
+SET ANSI_PADDING ON
+
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [UQ_Familias_CodigoFamilia] ON [dbo].[Familias]
+(
+	[CodigoFamilia] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
 GO
 
--- =============================================
--- FunStudios - Script de creación de base de datos
--- Generado desde los modelos EF Core y OnModelCreating
--- Todos los PKs usan IDENTITY(1,1)
--- Los catálogos se insertan con SET IDENTITY_INSERT ON
--- =============================================
+-- ---------- Tabla: MetodosPago ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[MetodosPago](
+	[MetodoPagoId] [int] IDENTITY(1,1) NOT NULL,
+	[NombreMetodo] [nvarchar](50) NOT NULL,
+ CONSTRAINT [PK_MetodosPago] PRIMARY KEY CLUSTERED 
+(
+	[MetodoPagoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
 
-IF DB_ID('FunStudios') IS NOT NULL
-BEGIN
-    ALTER DATABASE FunStudios SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE FunStudios;
-END
 GO
 
-CREATE DATABASE FunStudios;
+-- ---------- Tabla: Parametros ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Parametros](
+	[ParametroId] [int] IDENTITY(1,1) NOT NULL,
+	[Clave] [nvarchar](100) NOT NULL,
+	[Valor] [nvarchar](500) NULL,
+	[Descripcion] [nvarchar](300) NULL,
+	[Tipo] [nvarchar](20) NOT NULL,
+	[NombreVisible] [nvarchar](150) NULL,
+ CONSTRAINT [PK_Parametros] PRIMARY KEY CLUSTERED 
+(
+	[ParametroId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
+
+GO
+SET ANSI_PADDING ON
+
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [UQ_Parametros_Clave] ON [dbo].[Parametros]
+(
+	[Clave] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[Parametros] ADD  CONSTRAINT [DF_Parametros_Tipo]  DEFAULT (N'texto') FOR [Tipo]
 GO
 
-USE FunStudios;
+-- ---------- Tabla: Roles ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Roles](
+	[RolId] [int] IDENTITY(1,1) NOT NULL,
+	[NombreRol] [nvarchar](50) NOT NULL,
+ CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED 
+(
+	[RolId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
+
 GO
 
--- =============================================
--- 1. ROLES
--- =============================================
-CREATE TABLE Roles (
-    RolId       INT           NOT NULL IDENTITY(1,1),
-    NombreRol   NVARCHAR(50)  NOT NULL,
+-- ---------- Tabla: TiposAcceso ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[TiposAcceso](
+	[TipoAccesoId] [int] IDENTITY(1,1) NOT NULL,
+	[NombreAcceso] [nvarchar](50) NOT NULL,
+	[Precio] [decimal](10, 2) NOT NULL,
+	[Descripcion] [nvarchar](200) NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_TiposAcceso] PRIMARY KEY CLUSTERED 
+(
+	[TipoAccesoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
 
-    CONSTRAINT PK_Roles PRIMARY KEY (RolId)
-);
+GO
+ALTER TABLE [dbo].[TiposAcceso] ADD  CONSTRAINT [DF_TiposAcceso_Precio]  DEFAULT ((0)) FOR [Precio]
+GO
+ALTER TABLE [dbo].[TiposAcceso] ADD  CONSTRAINT [DF_TiposAcceso_Activo]  DEFAULT ((1)) FOR [Activo]
 GO
 
--- =============================================
--- 2. USUARIOS
--- =============================================
-CREATE TABLE Usuarios (
-    UsuarioId      INT            NOT NULL IDENTITY(1,1),
-    RolId          INT            NOT NULL,
-    Nombres        NVARCHAR(100)  NOT NULL,
-    Apellidos      NVARCHAR(100)  NOT NULL,
-    NombreUsuario  NVARCHAR(50)   NOT NULL,
-    PasswordHash   NVARCHAR(500)  NOT NULL,
-    Activo         BIT            NOT NULL DEFAULT 1,
+-- ---------- Tabla: Tutores ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Tutores](
+	[TutorId] [int] IDENTITY(1,1) NOT NULL,
+	[FamiliaId] [int] NOT NULL,
+	[Nombre] [nvarchar](100) NOT NULL,
+	[Telefono] [nvarchar](20) NOT NULL,
+	[EsPrincipal] [bit] NOT NULL,
+	[HuellaTemplate] [varbinary](max) NULL,
+ CONSTRAINT [PK_Tutores] PRIMARY KEY CLUSTERED 
+(
+	[TutorId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
 
-    CONSTRAINT PK_Usuarios PRIMARY KEY (UsuarioId),
-    CONSTRAINT UQ_Usuarios_NombreUsuario UNIQUE (NombreUsuario),
-    CONSTRAINT FK_Usuarios_Roles FOREIGN KEY (RolId)
-        REFERENCES Roles(RolId) ON DELETE NO ACTION
-);
+GO
+CREATE NONCLUSTERED INDEX [IX_Tutores_FamiliaId] ON [dbo].[Tutores]
+(
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[Tutores] ADD  CONSTRAINT [DF_Tutores_EsPrincipal]  DEFAULT ((0)) FOR [EsPrincipal]
+GO
+ALTER TABLE [dbo].[Tutores]  WITH CHECK ADD  CONSTRAINT [FK_Tutores_Familias] FOREIGN KEY([FamiliaId])
+REFERENCES [dbo].[Familias] ([FamiliaId])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Tutores] CHECK CONSTRAINT [FK_Tutores_Familias]
 GO
 
-CREATE NONCLUSTERED INDEX IX_Usuarios_RolId
-    ON Usuarios(RolId);
+-- ---------- Tabla: Usuarios ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Usuarios](
+	[UsuarioId] [int] IDENTITY(1,1) NOT NULL,
+	[RolId] [int] NOT NULL,
+	[Nombres] [nvarchar](100) NOT NULL,
+	[Apellidos] [nvarchar](100) NOT NULL,
+	[NombreUsuario] [nvarchar](50) NOT NULL,
+	[PasswordHash] [nvarchar](500) NOT NULL,
+	[Activo] [bit] NOT NULL,
+ CONSTRAINT [PK_Usuarios] PRIMARY KEY CLUSTERED 
+(
+	[UsuarioId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF),
+ CONSTRAINT [UQ_Usuarios_NombreUsuario] UNIQUE NONCLUSTERED 
+(
+	[NombreUsuario] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Usuarios_RolId] ON [dbo].[Usuarios]
+(
+	[RolId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[Usuarios] ADD  DEFAULT ((1)) FOR [Activo]
+GO
+ALTER TABLE [dbo].[Usuarios]  WITH CHECK ADD  CONSTRAINT [FK_Usuarios_Roles] FOREIGN KEY([RolId])
+REFERENCES [dbo].[Roles] ([RolId])
+GO
+ALTER TABLE [dbo].[Usuarios] CHECK CONSTRAINT [FK_Usuarios_Roles]
 GO
 
--- =============================================
--- 3. FAMILIAS
--- =============================================
-CREATE TABLE Familias (
-    FamiliaId          INT             NOT NULL IDENTITY(1,1),
-    ApellidosFamilia   NVARCHAR(150)   NOT NULL,
-    CodigoFamilia      NVARCHAR(20)    NULL,
+-- ---------- Tabla: Clientes ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Clientes](
+	[ClienteId] [int] IDENTITY(1,1) NOT NULL,
+	[FamiliaId] [int] NOT NULL,
+	[Nombre] [nvarchar](100) NOT NULL,
+	[FechaNacimiento] [date] NOT NULL,
+	[NotasMedicas] [nvarchar](500) NULL,
+	[HuellaNinoTemplate] [varbinary](max) NULL,
+	[Nacionalidad] [nvarchar](50) NULL,
+ CONSTRAINT [PK_Clientes] PRIMARY KEY CLUSTERED 
+(
+	[ClienteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
 
-    CONSTRAINT PK_Familias PRIMARY KEY (FamiliaId),
-    CONSTRAINT UQ_Familias_CodigoFamilia UNIQUE (CodigoFamilia)
-);
+GO
+CREATE NONCLUSTERED INDEX [IX_Clientes_FamiliaId] ON [dbo].[Clientes]
+(
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[Clientes]  WITH CHECK ADD  CONSTRAINT [FK_Clientes_Familias] FOREIGN KEY([FamiliaId])
+REFERENCES [dbo].[Familias] ([FamiliaId])
+GO
+ALTER TABLE [dbo].[Clientes] CHECK CONSTRAINT [FK_Clientes_Familias]
 GO
 
--- =============================================
--- 4. TUTORES (uno por familia es EsPrincipal = 1)
--- =============================================
-CREATE TABLE Tutores (
-    TutorId       INT            NOT NULL IDENTITY(1,1),
-    FamiliaId     INT            NOT NULL,
-    Nombre        NVARCHAR(100)  NOT NULL,
-    Telefono      NVARCHAR(20)   NOT NULL,
-    EsPrincipal   BIT            NOT NULL DEFAULT 0,
-    HuellaTemplate VARBINARY(MAX) NULL,
+-- ---------- Tabla: FidelidadCuentas ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[FidelidadCuentas](
+	[FidelidadId] [int] IDENTITY(1,1) NOT NULL,
+	[ClienteId] [int] NOT NULL,
+	[ConteoChecks] [tinyint] NOT NULL,
+	[EntradasGratisGanadas] [int] NOT NULL,
+	[FechaUltimaActualizacion] [datetime2](7) NULL,
+ CONSTRAINT [PK_FidelidadCuentas] PRIMARY KEY CLUSTERED 
+(
+	[FidelidadId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF),
+ CONSTRAINT [UQ_FidelidadCuentas_ClienteId] UNIQUE NONCLUSTERED 
+(
+	[ClienteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
 
-    CONSTRAINT PK_Tutores PRIMARY KEY (TutorId),
-    CONSTRAINT FK_Tutores_Familias FOREIGN KEY (FamiliaId)
-        REFERENCES Familias(FamiliaId) ON DELETE CASCADE
-);
+GO
+ALTER TABLE [dbo].[FidelidadCuentas] ADD  DEFAULT ((0)) FOR [ConteoChecks]
+GO
+ALTER TABLE [dbo].[FidelidadCuentas] ADD  DEFAULT ((0)) FOR [EntradasGratisGanadas]
+GO
+ALTER TABLE [dbo].[FidelidadCuentas]  WITH CHECK ADD  CONSTRAINT [FK_FidelidadCuentas_Clientes] FOREIGN KEY([ClienteId])
+REFERENCES [dbo].[Clientes] ([ClienteId])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[FidelidadCuentas] CHECK CONSTRAINT [FK_FidelidadCuentas_Clientes]
 GO
 
-CREATE NONCLUSTERED INDEX IX_Tutores_FamiliaId
-    ON Tutores(FamiliaId);
+-- ---------- Tabla: LogsBiometrico ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[LogsBiometrico](
+	[LogId] [int] IDENTITY(1,1) NOT NULL,
+	[FechaHoraEvento] [datetime2](7) NOT NULL,
+	[Gravedad] [nvarchar](20) NULL,
+	[Operacion] [nvarchar](50) NULL,
+	[MensajeDetalle] [nvarchar](500) NOT NULL,
+	[IPEstacionTrabajo] [nvarchar](45) NOT NULL,
+	[UsuarioId] [int] NULL,
+	[ClienteId] [int] NULL,
+ CONSTRAINT [PK_LogsBiometrico] PRIMARY KEY CLUSTERED 
+(
+	[LogId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
+
+GO
+CREATE NONCLUSTERED INDEX [IX_LogsBiometrico_ClienteId] ON [dbo].[LogsBiometrico]
+(
+	[ClienteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+CREATE NONCLUSTERED INDEX [IX_LogsBiometrico_UsuarioId] ON [dbo].[LogsBiometrico]
+(
+	[UsuarioId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[LogsBiometrico]  WITH CHECK ADD  CONSTRAINT [FK_LogsBiometrico_Clientes] FOREIGN KEY([ClienteId])
+REFERENCES [dbo].[Clientes] ([ClienteId])
+ON DELETE SET NULL
+GO
+ALTER TABLE [dbo].[LogsBiometrico] CHECK CONSTRAINT [FK_LogsBiometrico_Clientes]
+GO
+ALTER TABLE [dbo].[LogsBiometrico]  WITH CHECK ADD  CONSTRAINT [FK_LogsBiometrico_Usuarios] FOREIGN KEY([UsuarioId])
+REFERENCES [dbo].[Usuarios] ([UsuarioId])
+ON DELETE SET NULL
+GO
+ALTER TABLE [dbo].[LogsBiometrico] CHECK CONSTRAINT [FK_LogsBiometrico_Usuarios]
 GO
 
--- =============================================
--- 5. CLIENTES
--- =============================================
-CREATE TABLE Clientes (
-    ClienteId          INT            NOT NULL IDENTITY(1,1),
-    FamiliaId          INT            NOT NULL,
-    Nombre             NVARCHAR(100)  NOT NULL,
-    FechaNacimiento    DATE           NOT NULL,
-    NotasMedicas       NVARCHAR(500)  NULL,
-    HuellaNinoTemplate VARBINARY(MAX) NULL,
+-- ---------- Tabla: Membresias ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Membresias](
+	[MembresiaId] [int] IDENTITY(1,1) NOT NULL,
+	[ClienteId] [int] NOT NULL,
+	[NombreMembresia] [nvarchar](100) NOT NULL,
+	[Descripcion] [nvarchar](300) NULL,
+	[FechaInicio] [date] NOT NULL,
+	[FechaFin] [date] NOT NULL,
+	[Precio] [decimal](18, 2) NOT NULL,
+	[Estado] [nvarchar](20) NOT NULL,
+	[FechaCreacion] [datetime2](7) NOT NULL,
+ CONSTRAINT [PK_Membresias] PRIMARY KEY CLUSTERED 
+(
+	[MembresiaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
 
-    CONSTRAINT PK_Clientes PRIMARY KEY (ClienteId),
-    CONSTRAINT FK_Clientes_Familias FOREIGN KEY (FamiliaId)
-        REFERENCES Familias(FamiliaId) ON DELETE NO ACTION
-);
+GO
+CREATE NONCLUSTERED INDEX [IX_Membresias_ClienteId] ON [dbo].[Membresias]
+(
+	[ClienteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[Membresias] ADD  DEFAULT ('Activa') FOR [Estado]
+GO
+ALTER TABLE [dbo].[Membresias]  WITH CHECK ADD  CONSTRAINT [FK_Membresias_Clientes] FOREIGN KEY([ClienteId])
+REFERENCES [dbo].[Clientes] ([ClienteId])
+GO
+ALTER TABLE [dbo].[Membresias] CHECK CONSTRAINT [FK_Membresias_Clientes]
 GO
 
-CREATE NONCLUSTERED INDEX IX_Clientes_FamiliaId
-    ON Clientes(FamiliaId);
+-- ---------- Tabla: Ventas ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Ventas](
+	[VentaId] [int] IDENTITY(1,1) NOT NULL,
+	[ClienteId] [int] NOT NULL,
+	[MetodoPagoId] [int] NOT NULL,
+	[Monto] [decimal](18, 2) NOT NULL,
+	[Descripcion] [nvarchar](300) NOT NULL,
+	[FechaVenta] [datetime2](7) NOT NULL,
+ CONSTRAINT [PK_Ventas] PRIMARY KEY CLUSTERED 
+(
+	[VentaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
+
+GO
+CREATE NONCLUSTERED INDEX [IX_Ventas_ClienteId] ON [dbo].[Ventas]
+(
+	[ClienteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+CREATE NONCLUSTERED INDEX [IX_Ventas_MetodoPagoId] ON [dbo].[Ventas]
+(
+	[MetodoPagoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[Ventas]  WITH CHECK ADD  CONSTRAINT [FK_Ventas_Clientes] FOREIGN KEY([ClienteId])
+REFERENCES [dbo].[Clientes] ([ClienteId])
+GO
+ALTER TABLE [dbo].[Ventas] CHECK CONSTRAINT [FK_Ventas_Clientes]
+GO
+ALTER TABLE [dbo].[Ventas]  WITH CHECK ADD  CONSTRAINT [FK_Ventas_MetodosPago] FOREIGN KEY([MetodoPagoId])
+REFERENCES [dbo].[MetodosPago] ([MetodoPagoId])
+GO
+ALTER TABLE [dbo].[Ventas] CHECK CONSTRAINT [FK_Ventas_MetodosPago]
 GO
 
--- =============================================
--- 6. TIPO_ACCESO
--- =============================================
-CREATE TABLE TiposAcceso (
-    TipoAccesoId  INT           NOT NULL IDENTITY(1,1),
-    NombreAcceso  NVARCHAR(50)  NOT NULL,
+-- ---------- Tabla: EntradasHistorial ----------
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EntradasHistorial](
+	[EntradaId] [int] IDENTITY(1,1) NOT NULL,
+	[FamiliaId] [int] NOT NULL,
+	[ClienteId] [int] NOT NULL,
+	[FechaHoraEntrada] [datetime2](7) NOT NULL,
+	[FechaHoraSalida] [datetime2](7) NULL,
+	[TipoAccesoId] [int] NOT NULL,
+	[MembresiaId] [int] NULL,
+	[VentaId] [int] NULL,
+	[TutorNombre] [nvarchar](150) NULL,
+	[TutorTelefono] [nvarchar](20) NULL,
+	[Acompanantes] [int] NOT NULL,
+ CONSTRAINT [PK_EntradasHistorial] PRIMARY KEY CLUSTERED 
+(
+	[EntradaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+)
 
-    CONSTRAINT PK_TiposAcceso PRIMARY KEY (TipoAccesoId)
-);
+GO
+CREATE NONCLUSTERED INDEX [IX_EntradasHistorial_ClienteId] ON [dbo].[EntradasHistorial]
+(
+	[ClienteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+CREATE NONCLUSTERED INDEX [IX_EntradasHistorial_FamiliaId] ON [dbo].[EntradasHistorial]
+(
+	[FamiliaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+CREATE NONCLUSTERED INDEX [IX_EntradasHistorial_MembresiaId] ON [dbo].[EntradasHistorial]
+(
+	[MembresiaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+CREATE NONCLUSTERED INDEX [IX_EntradasHistorial_TipoAccesoId] ON [dbo].[EntradasHistorial]
+(
+	[TipoAccesoId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+CREATE NONCLUSTERED INDEX [IX_EntradasHistorial_VentaId] ON [dbo].[EntradasHistorial]
+(
+	[VentaId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF)
+GO
+ALTER TABLE [dbo].[EntradasHistorial] ADD  CONSTRAINT [DF_EntradasHistorial_Acompanantes]  DEFAULT ((1)) FOR [Acompanantes]
+GO
+ALTER TABLE [dbo].[EntradasHistorial]  WITH CHECK ADD  CONSTRAINT [FK_EntradasHistorial_Clientes] FOREIGN KEY([ClienteId])
+REFERENCES [dbo].[Clientes] ([ClienteId])
+GO
+ALTER TABLE [dbo].[EntradasHistorial] CHECK CONSTRAINT [FK_EntradasHistorial_Clientes]
+GO
+ALTER TABLE [dbo].[EntradasHistorial]  WITH CHECK ADD  CONSTRAINT [FK_EntradasHistorial_Familias] FOREIGN KEY([FamiliaId])
+REFERENCES [dbo].[Familias] ([FamiliaId])
+GO
+ALTER TABLE [dbo].[EntradasHistorial] CHECK CONSTRAINT [FK_EntradasHistorial_Familias]
+GO
+ALTER TABLE [dbo].[EntradasHistorial]  WITH CHECK ADD  CONSTRAINT [FK_EntradasHistorial_Membresias] FOREIGN KEY([MembresiaId])
+REFERENCES [dbo].[Membresias] ([MembresiaId])
+GO
+ALTER TABLE [dbo].[EntradasHistorial] CHECK CONSTRAINT [FK_EntradasHistorial_Membresias]
+GO
+ALTER TABLE [dbo].[EntradasHistorial]  WITH CHECK ADD  CONSTRAINT [FK_EntradasHistorial_TiposAcceso] FOREIGN KEY([TipoAccesoId])
+REFERENCES [dbo].[TiposAcceso] ([TipoAccesoId])
+GO
+ALTER TABLE [dbo].[EntradasHistorial] CHECK CONSTRAINT [FK_EntradasHistorial_TiposAcceso]
+GO
+ALTER TABLE [dbo].[EntradasHistorial]  WITH CHECK ADD  CONSTRAINT [FK_EntradasHistorial_Ventas] FOREIGN KEY([VentaId])
+REFERENCES [dbo].[Ventas] ([VentaId])
+GO
+ALTER TABLE [dbo].[EntradasHistorial] CHECK CONSTRAINT [FK_EntradasHistorial_Ventas]
 GO
 
--- =============================================
--- 7. METODOS_PAGO
--- =============================================
-CREATE TABLE MetodosPago (
-    MetodoPagoId  INT           NOT NULL IDENTITY(1,1),
-    NombreMetodo  NVARCHAR(50)  NOT NULL,
-
-    CONSTRAINT PK_MetodosPago PRIMARY KEY (MetodoPagoId)
-);
-GO
-
--- =============================================
--- 8. MEMBRESIAS
--- =============================================
-CREATE TABLE Membresias (
-    MembresiaId      INT            NOT NULL IDENTITY(1,1),
-    ClienteId        INT            NOT NULL,
-    NombreMembresia  NVARCHAR(100)  NOT NULL,
-    Descripcion      NVARCHAR(300)  NULL,
-    FechaInicio      DATE           NOT NULL,
-    FechaFin         DATE           NOT NULL,
-    Precio           DECIMAL(18,2)  NOT NULL,
-    Estado           NVARCHAR(20)   NOT NULL DEFAULT 'Activa',
-    FechaCreacion    DATETIME2      NOT NULL,
-
-    CONSTRAINT PK_Membresias PRIMARY KEY (MembresiaId),
-    CONSTRAINT FK_Membresias_Clientes FOREIGN KEY (ClienteId)
-        REFERENCES Clientes(ClienteId) ON DELETE NO ACTION
-);
-GO
-
-CREATE NONCLUSTERED INDEX IX_Membresias_ClienteId
-    ON Membresias(ClienteId);
-GO
-
--- =============================================
--- 9. VENTAS
--- =============================================
-CREATE TABLE Ventas (
-    VentaId       INT            NOT NULL IDENTITY(1,1),
-    ClienteId     INT            NOT NULL,
-    MetodoPagoId  INT            NOT NULL,
-    Monto         DECIMAL(18,2)  NOT NULL,
-    Descripcion   NVARCHAR(300)  NOT NULL,
-    FechaVenta    DATETIME2      NOT NULL,
-
-    CONSTRAINT PK_Ventas PRIMARY KEY (VentaId),
-    CONSTRAINT FK_Ventas_Clientes FOREIGN KEY (ClienteId)
-        REFERENCES Clientes(ClienteId) ON DELETE NO ACTION,
-    CONSTRAINT FK_Ventas_MetodosPago FOREIGN KEY (MetodoPagoId)
-        REFERENCES MetodosPago(MetodoPagoId) ON DELETE NO ACTION
-);
-GO
-
-CREATE NONCLUSTERED INDEX IX_Ventas_ClienteId
-    ON Ventas(ClienteId);
-GO
-
-CREATE NONCLUSTERED INDEX IX_Ventas_MetodoPagoId
-    ON Ventas(MetodoPagoId);
-GO
-
--- =============================================
--- 10. FIDELIDAD_CUENTAS (1 a 1 con Cliente)
--- =============================================
-CREATE TABLE FidelidadCuentas (
-    FidelidadId              INT       NOT NULL IDENTITY(1,1),
-    ClienteId                INT       NOT NULL,
-    ConteoChecks             TINYINT   NOT NULL DEFAULT 0,
-    EntradasGratisGanadas    INT       NOT NULL DEFAULT 0,
-    FechaUltimaActualizacion DATETIME2 NULL,
-
-    CONSTRAINT PK_FidelidadCuentas PRIMARY KEY (FidelidadId),
-    CONSTRAINT UQ_FidelidadCuentas_ClienteId UNIQUE (ClienteId),
-    CONSTRAINT FK_FidelidadCuentas_Clientes FOREIGN KEY (ClienteId)
-        REFERENCES Clientes(ClienteId) ON DELETE CASCADE
-);
-GO
-
--- =============================================
--- 11. ENTRADAS_HISTORIAL
--- =============================================
-CREATE TABLE EntradasHistorial (
-    EntradaId         INT        NOT NULL IDENTITY(1,1),
-    FamiliaId         INT        NOT NULL,
-    ClienteId         INT        NOT NULL,
-    FechaHoraEntrada  DATETIME2  NOT NULL,
-    FechaHoraSalida   DATETIME2  NULL,
-    TipoAccesoId      INT        NOT NULL,
-    MembresiaId       INT        NULL,
-    VentaId           INT        NULL,
-    TutorNombre       NVARCHAR(300) NULL,
-    TutorTelefono     NVARCHAR(20)  NULL,
-    Acompanantes      INT           NOT NULL DEFAULT 1,
-
-    CONSTRAINT PK_EntradasHistorial PRIMARY KEY (EntradaId),
-    CONSTRAINT FK_EntradasHistorial_Familias FOREIGN KEY (FamiliaId)
-        REFERENCES Familias(FamiliaId) ON DELETE NO ACTION,
-    CONSTRAINT FK_EntradasHistorial_Clientes FOREIGN KEY (ClienteId)
-        REFERENCES Clientes(ClienteId) ON DELETE NO ACTION,
-    CONSTRAINT FK_EntradasHistorial_TiposAcceso FOREIGN KEY (TipoAccesoId)
-        REFERENCES TiposAcceso(TipoAccesoId) ON DELETE NO ACTION,
-    CONSTRAINT FK_EntradasHistorial_Membresias FOREIGN KEY (MembresiaId)
-        REFERENCES Membresias(MembresiaId) ON DELETE NO ACTION,
-    CONSTRAINT FK_EntradasHistorial_Ventas FOREIGN KEY (VentaId)
-        REFERENCES Ventas(VentaId) ON DELETE NO ACTION
-);
-GO
-
-CREATE NONCLUSTERED INDEX IX_EntradasHistorial_ClienteId
-    ON EntradasHistorial(ClienteId);
-GO
-
-CREATE NONCLUSTERED INDEX IX_EntradasHistorial_FamiliaId
-    ON EntradasHistorial(FamiliaId);
-GO
-
-CREATE NONCLUSTERED INDEX IX_EntradasHistorial_TipoAccesoId
-    ON EntradasHistorial(TipoAccesoId);
-GO
-
-CREATE NONCLUSTERED INDEX IX_EntradasHistorial_VentaId
-    ON EntradasHistorial(VentaId);
-GO
-
-CREATE NONCLUSTERED INDEX IX_EntradasHistorial_MembresiaId
-    ON EntradasHistorial(MembresiaId);
-GO
-
--- =============================================
--- 12. LOGS_BIOMETRICO
--- =============================================
-CREATE TABLE LogsBiometrico (
-    LogId              INT            NOT NULL IDENTITY(1,1),
-    FechaHoraEvento    DATETIME2      NOT NULL,
-    Gravedad           NVARCHAR(20)   NULL,
-    Operacion          NVARCHAR(50)   NULL,
-    MensajeDetalle     NVARCHAR(500)  NOT NULL,
-    IPEstacionTrabajo  NVARCHAR(45)   NOT NULL,
-    UsuarioId          INT            NULL,
-    ClienteId          INT            NULL,
-
-    CONSTRAINT PK_LogsBiometrico PRIMARY KEY (LogId),
-    CONSTRAINT FK_LogsBiometrico_Usuarios FOREIGN KEY (UsuarioId)
-        REFERENCES Usuarios(UsuarioId) ON DELETE SET NULL,
-    CONSTRAINT FK_LogsBiometrico_Clientes FOREIGN KEY (ClienteId)
-        REFERENCES Clientes(ClienteId) ON DELETE SET NULL
-);
-GO
-
-CREATE NONCLUSTERED INDEX IX_LogsBiometrico_UsuarioId
-    ON LogsBiometrico(UsuarioId);
-GO
-
-CREATE NONCLUSTERED INDEX IX_LogsBiometrico_ClienteId
-    ON LogsBiometrico(ClienteId);
-GO
-
--- =============================================
--- INSERTAR CATÁLOGOS CON IDs FIJOS
--- (el código usa constantes: Rol.Administrador=1, TiposAcceso.DayPass=1, etc.)
--- =============================================
-
-SET IDENTITY_INSERT Roles ON;
-INSERT INTO Roles (RolId, NombreRol) VALUES
-(1, N'Administrador'),
-(2, N'Recepción');
-SET IDENTITY_INSERT Roles OFF;
-GO
-
-SET IDENTITY_INSERT TiposAcceso ON;
-INSERT INTO TiposAcceso (TipoAccesoId, NombreAcceso) VALUES
-(1, N'Day Pass'),
-(2, N'Fidelidad Gratis'),
-(3, N'Membresía');
-SET IDENTITY_INSERT TiposAcceso OFF;
-GO
-
-SET IDENTITY_INSERT MetodosPago ON;
-INSERT INTO MetodosPago (MetodoPagoId, NombreMetodo) VALUES
-(1, N'Efectivo'),
-(2, N'Tarjeta'),
-(3, N'Transferencia');
-SET IDENTITY_INSERT MetodosPago OFF;
-GO
-
--- =============================================
--- USUARIOS DEL SISTEMA
--- Contraseñas hasheadas con PBKDF2 (SHA256, 100000 iteraciones)
--- Formato: {iteraciones}.{saltBase64}.{hashBase64}
--- Generadas con PasswordHasher.Hash() de la aplicación
--- =============================================
-SET IDENTITY_INSERT Usuarios ON;
-INSERT INTO Usuarios (UsuarioId, RolId, Nombres, Apellidos, NombreUsuario, PasswordHash, Activo) VALUES
-(1, 1, N'Ana',    N'Martínez',  N'admin',     N'100000.MkVbcaMcAmvA+8mYHABcOA==.GPjnrhd1g8Hid8fwDozxD2Ja7ANIIm/JlTm8Y5yMpj0=', 1),
-(2, 2, N'Carla',  N'Reyes',     N'recepcion', N'100000.2Hwno3N2Xn28HzoUC7Y0zw==.istILaLS4gWyxXUFz6y/5Hwhqdh5x4CUTaq9La3rOkw=', 1),
-(3, 2, N'Luis',   N'Ortega',    N'lortega',   N'100000.2Hwno3N2Xn28HzoUC7Y0zw==.istILaLS4gWyxXUFz6y/5Hwhqdh5x4CUTaq9La3rOkw=', 0);
-SET IDENTITY_INSERT Usuarios OFF;
-GO
-
-PRINT '==============================================';
-PRINT '  Base de datos FunStudios creada exitosamente';
-PRINT '  11 tablas + 3 catálogos + 3 usuarios';
-PRINT '==============================================';
-GO
