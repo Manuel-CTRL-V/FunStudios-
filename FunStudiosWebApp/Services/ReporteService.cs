@@ -23,57 +23,63 @@ public class ReporteService : IReporteService
     {
         var hoy = DateTime.Now.Date;
 
-        var ninosDentro = await _context.EntradasHistorial
+        var ninosDentroTask = _context.EntradasHistorial
             .CountAsync(eh => eh.FechaHoraSalida == null);
 
-        var dayPassesHoy = await _context.EntradasHistorial
+        var dayPassesHoyTask = _context.EntradasHistorial
             .CountAsync(eh => eh.TipoAccesoId == TipoAcceso.DayPass && eh.FechaHoraEntrada >= hoy);
 
-        var ingresosDayPassHoy = await _context.Ventas
+        var ingresosDayPassHoyTask = _context.Ventas
             .Where(v => v.Descripcion == "Day Pass" && v.FechaVenta >= hoy)
-            .SumAsync(v => (decimal?)v.Monto) ?? 0m;
+            .SumAsync(v => (decimal?)v.Monto);
 
-        // Entradas gratis: canjeadas históricamente + saldo disponible por canjear
-        var gratisCanjeadas = await _context.EntradasHistorial
+        var gratisCanjeadasTask = _context.EntradasHistorial
             .CountAsync(eh => eh.TipoAccesoId == TipoAcceso.FidelidadGratis);
-        var gratisSaldo = await _context.FidelidadCuentas
+
+        var gratisSaldoTask = _context.FidelidadCuentas
             .SumAsync(fc => fc.EntradasGratisGanadas);
 
-        var escaneosRecientes = await ObtenerMovimientosRecientesAsync(6);
+        var escaneosRecientesTask = ObtenerMovimientosRecientesAsync(6);
+        var checksParaPremioTask = _configuracion.ObtenerChecksParaPremioAsync();
 
-        // Estado del lector consultado en vivo (captura real del dispositivo remoto).
-        var estado = await _biometria.EstadoAsync();
+        await Task.WhenAll(ninosDentroTask, dayPassesHoyTask, ingresosDayPassHoyTask,
+            gratisCanjeadasTask, gratisSaldoTask, escaneosRecientesTask, checksParaPremioTask);
 
         return new DashboardViewModel
         {
-            NinosDentro = ninosDentro,
-            DayPassesHoy = dayPassesHoy,
-            IngresosDayPassHoy = ingresosDayPassHoy,
-            GratisCanjeadasTotal = gratisCanjeadas,
-            GratisDisponiblesSaldo = gratisSaldo,
-            ChecksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync(),
-            LectorNombre = estado.NombreDispositivo,
-            LectorConectado = estado.LectorConectado,
-            EscaneosRecientes = escaneosRecientes
+            NinosDentro = await ninosDentroTask,
+            DayPassesHoy = await dayPassesHoyTask,
+            IngresosDayPassHoy = await ingresosDayPassHoyTask ?? 0m,
+            GratisCanjeadasTotal = await gratisCanjeadasTask,
+            GratisDisponiblesSaldo = await gratisSaldoTask,
+            ChecksParaPremio = await checksParaPremioTask,
+            LectorNombre = "Lector biométrico",
+            LectorConectado = false,
+            EscaneosRecientes = await escaneosRecientesTask
         };
     }
 
     /// <summary>Últimos movimientos de hoy para la lista "Escaneos Recientes" del checkpoint.</summary>
     private async Task<List<MovimientoRecienteViewModel>> ObtenerMovimientosRecientesAsync(int cantidad)
     {
-        var entradas = await _context.EntradasHistorial
+        var entradasTask = _context.EntradasHistorial
             .Include(eh => eh.Cliente)
             .Include(eh => eh.TipoAcceso)
             .OrderByDescending(eh => eh.FechaHoraEntrada)
             .Take(cantidad)
             .ToListAsync();
 
-        var salidas = await _context.EntradasHistorial
+        var salidasTask = _context.EntradasHistorial
             .Where(eh => eh.FechaHoraSalida != null)
             .Include(eh => eh.Cliente)
             .OrderByDescending(eh => eh.FechaHoraSalida)
             .Take(cantidad)
             .ToListAsync();
+
+        await Task.WhenAll(entradasTask, salidasTask);
+
+        var entradas = await entradasTask;
+        var salidas = await salidasTask;
 
         return entradas.Select(eh => new MovimientoRecienteViewModel
         {
