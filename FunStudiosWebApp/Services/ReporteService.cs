@@ -23,39 +23,36 @@ public class ReporteService : IReporteService
     {
         var hoy = DateTime.Now.Date;
 
-        var ninosDentroTask = _context.EntradasHistorial
+        var ninosDentro = await _context.EntradasHistorial
             .CountAsync(eh => eh.FechaHoraSalida == null);
 
-        var dayPassesHoyTask = _context.EntradasHistorial
+        var dayPassesHoy = await _context.EntradasHistorial
             .CountAsync(eh => eh.TipoAccesoId == TipoAcceso.DayPass && eh.FechaHoraEntrada >= hoy);
 
-        var ingresosDayPassHoyTask = _context.Ventas
+        var ingresosDayPassHoy = await _context.Ventas
             .Where(v => v.Descripcion == "Day Pass" && v.FechaVenta >= hoy)
-            .SumAsync(v => (decimal?)v.Monto);
+            .SumAsync(v => (decimal?)v.Monto) ?? 0m;
 
-        var gratisCanjeadasTask = _context.EntradasHistorial
+        var gratisCanjeadas = await _context.EntradasHistorial
             .CountAsync(eh => eh.TipoAccesoId == TipoAcceso.FidelidadGratis);
 
-        var gratisSaldoTask = _context.FidelidadCuentas
+        var gratisSaldo = await _context.FidelidadCuentas
             .SumAsync(fc => fc.EntradasGratisGanadas);
 
-        var escaneosRecientesTask = ObtenerMovimientosRecientesAsync(6);
-        var checksParaPremioTask = _configuracion.ObtenerChecksParaPremioAsync();
-
-        await Task.WhenAll(ninosDentroTask, dayPassesHoyTask, ingresosDayPassHoyTask,
-            gratisCanjeadasTask, gratisSaldoTask, escaneosRecientesTask, checksParaPremioTask);
+        var escaneosRecientes = await ObtenerMovimientosRecientesAsync(6);
+        var checksParaPremio = await _configuracion.ObtenerChecksParaPremioAsync();
 
         return new DashboardViewModel
         {
-            NinosDentro = await ninosDentroTask,
-            DayPassesHoy = await dayPassesHoyTask,
-            IngresosDayPassHoy = await ingresosDayPassHoyTask ?? 0m,
-            GratisCanjeadasTotal = await gratisCanjeadasTask,
-            GratisDisponiblesSaldo = await gratisSaldoTask,
-            ChecksParaPremio = await checksParaPremioTask,
+            NinosDentro = ninosDentro,
+            DayPassesHoy = dayPassesHoy,
+            IngresosDayPassHoy = ingresosDayPassHoy,
+            GratisCanjeadasTotal = gratisCanjeadas,
+            GratisDisponiblesSaldo = gratisSaldo,
+            ChecksParaPremio = checksParaPremio,
             LectorNombre = "Lector biométrico",
             LectorConectado = false,
-            EscaneosRecientes = await escaneosRecientesTask
+            EscaneosRecientes = escaneosRecientes
         };
     }
 
