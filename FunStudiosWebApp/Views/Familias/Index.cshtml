@@ -15,6 +15,10 @@
            class="flex items-center gap-2 px-6 py-2 bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors shadow-soft">
             <span class="material-symbols-outlined">refresh</span> Ver todos
         </a>
+        <a asp-controller="Familias" asp-action="Crear"
+           class="flex items-center gap-2 px-6 py-2 bg-primary text-on-primary font-label-lg rounded-full hover:bg-surface-tint transition-colors shadow-soft">
+            <span class="material-symbols-outlined">group_add</span> Nueva Familia
+        </a>
     </div>
 </div>
 
@@ -53,14 +57,13 @@
 <!-- Tabla principal -->
 <div class="bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-surface-variant/30">
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[820px]">
+        <table class="w-full text-left border-collapse min-w-[720px]">
             <thead>
                 <tr class="border-b-2 border-surface-variant/50 text-on-surface-variant font-label-sm uppercase tracking-wider">
                     <th class="pb-4 pl-4 font-semibold">Familia</th>
                     <th class="pb-4 font-semibold">Tutores</th>
                     <th class="pb-4 font-semibold text-center">Niños</th>
                     <th class="pb-4 font-semibold text-center">Dentro</th>
-                    <th class="pb-4 font-semibold">Huella tutor</th>
                     <th class="pb-4 pr-4 font-semibold text-right">Acciones</th>
                 </tr>
             </thead>
@@ -68,7 +71,7 @@
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="6" class="py-container-margin text-center text-outline">
+                        <td colspan="5" class="py-container-margin text-center text-outline">
                             No se encontraron familias con ese criterio.
                         </td>
                     </tr>
@@ -104,20 +107,6 @@
                             else
                             {
                                 <span class="bg-surface-variant/50 text-on-surface-variant font-label-sm px-3 py-1 rounded-full border border-outline-variant/30">—</span>
-                            }
-                        </td>
-
-                        <!-- Huella del tutor -->
-                        <td class="py-4">
-                            @if (f.HuellaTutorEnrolada)
-                            {
-                                <span class="font-label-sm bg-secondary-fixed-dim/30 text-secondary px-3 py-1 rounded-full whitespace-nowrap">
-                                    Enrolada ✓ <span class="font-bold">(@f.TutorConHuellaNombre)</span>
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="text-outline">Sin enrolar</span>
                             }
                         </td>
 

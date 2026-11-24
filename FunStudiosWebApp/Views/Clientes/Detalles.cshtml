@@ -1,6 +1,6 @@
 @model ClienteDetalleViewModel
 @{
-    ViewData["Title"] = $"{Model.Nombre} · Detalles";
+    ViewData["Title"] = $"{Model.NombreMostrar} · Detalles";
 }
 
 <!-- Encabezado del perfil -->
@@ -8,9 +8,13 @@
     <div class="flex items-center gap-stack-md">
         <div class="w-16 h-16 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-black text-headline-md">@Model.Inicial</div>
         <div>
-            <h2 class="text-headline-lg text-on-background leading-tight">@Model.Nombre</h2>
+            <h2 class="text-headline-lg text-on-background leading-tight">@Model.NombreMostrar</h2>
             <p class="text-body-md text-on-surface-variant">
-                Familia @Model.ApellidosFamilia · @Model.Edad años · Nacido el @Model.FechaNacimiento.ToString("dd/MM/yyyy")
+                Familia @Model.ApellidosFamilia · @Model.EdadTexto
+                @if (Model.TieneFechaNacimiento)
+                {
+                    <text>· Nacido el @Model.FechaNacimiento.ToString("dd/MM/yyyy")</text>
+                }
                 @if (!string.IsNullOrWhiteSpace(Model.Nacionalidad))
                 {
                     <text>· @Model.Nacionalidad</text>
@@ -124,14 +128,6 @@
                         </span>
                     </li>
                 }
-                <li class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary text-[18px]">fingerprint</span>
-                    Huella niño: @(Model.HuellaEnrolada ? "enrolada ✓" : "sin enrolar")
-                    @if (Model.HuellaTutorEnrolada)
-                    {
-                        <text>· Huella tutor: enrolada ✓</text>
-                    }
-                </li>
             </ul>
         </div>
     </div>

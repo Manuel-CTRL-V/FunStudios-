@@ -14,93 +14,12 @@ namespace FunStudiosWebApp.Services;
 public class AccesoService : IAccesoService
 {
     private readonly FunStudiosContext _context;
-    private readonly IBiometriaService _biometria;
     private readonly IConfiguracionService _configuracion;
 
-    public AccesoService(FunStudiosContext context, IBiometriaService biometria, IConfiguracionService configuracion)
+    public AccesoService(FunStudiosContext context, IConfiguracionService configuracion)
     {
         _context = context;
-        _biometria = biometria;
         _configuracion = configuracion;
-    }
-
-    public async Task<ResultadoEscaneoViewModel> EscanearAsync(int? usuarioId, string ip)
-    {
-        var resultado = new ResultadoEscaneoViewModel();
-
-        // Clientes con huella del niño enrolada
-        var clientes = await _context.Clientes
-            .Include(c => c.Familia)
-                .ThenInclude(f => f!.Tutores)
-            .Include(c => c.FidelidadCuenta)
-            .Where(c => c.HuellaNinoTemplate != null)
-            .ToListAsync();
-
-        // Tutores con huella enrolada (RF4: niños menores de 2 años)
-        var tutoresConHuella = await _context.Tutores
-            .Include(t => t.Familia)
-                .ThenInclude(f => f!.Clientes)
-            .Where(t => t.HuellaTemplate != null)
-            .ToListAsync();
-
-        // Construye la lista ordenada de templates para la identificación 1:N,
-        // guardando junto a cada template la resolución del cliente identificado.
-        var candidatos = new List<(string TemplateBase64, Func<Cliente> Resolver)>();
-
-        // Huellas de los niños enrolados
-        foreach (var cliente in clientes)
-        {
-            var clienteId = cliente.ClienteId;
-            candidatos.Add((Convert.ToBase64String(cliente.HuellaNinoTemplate!),
-                () => clientes.First(c => c.ClienteId == clienteId)));
-        }
-
-        // Huellas de los tutores (RF4: niños menores de 2 años)
-        foreach (var tutor in tutoresConHuella)
-        {
-            var familia = tutor.Familia!;
-            candidatos.Add((Convert.ToBase64String(tutor.HuellaTemplate!), () =>
-            {
-                // Se resuelve al niño de esa familia que dependa de la huella del tutor,
-                // o al menor si todos tienen huella propia.
-                return familia.Clientes
-                    .OrderBy(c => c.FechaNacimiento)
-                    .FirstOrDefault(c => c.HuellaNinoTemplate == null)
-                    ?? familia.Clientes.OrderBy(c => c.FechaNacimiento).FirstOrDefault()
-                    ?? throw new InvalidOperationException("Ningún cliente de la familia tiene huella enrolada.");
-            }));
-        }
-
-        if (candidatos.Count == 0)
-        {
-            resultado.Mensaje = "No hay huellas enroladas en el sistema.";
-            return resultado;
-        }
-
-        // Identificación 1:N real: el lector captura el dedo que el usuario coloca y
-        // se compara contra las huellas enroladas en la base (RF5).
-        Cliente? identificado = null;
-
-        var indice = await _biometria.IdentificarAsync(candidatos.Select(c => c.TemplateBase64).ToList());
-
-        if (indice >= 0 && indice < candidatos.Count)
-        {
-            identificado = candidatos[indice].Resolver();
-        }
-
-        if (identificado == null)
-        {
-            resultado.Mensaje = "Huella no reconocida. Verifique la inscripción del niño.";
-            await _biometria.RegistrarEventoAsync("Identificacion", "Huella no reconocida en el checkpoint.",
-                "Advertencia", usuarioId, ip: ip);
-            return resultado;
-        }
-
-        await _biometria.RegistrarEventoAsync("Identificacion",
-            $"Identificación exitosa: {identificado.Nombre} ({identificado.Familia!.ApellidosFamilia}).",
-            "Info", usuarioId, identificado.ClienteId, ip);
-
-        return await ConstruirResultadoAsync(identificado);
     }
 
     /// <summary>Arma el estado completo del cliente para la pantalla del checkpoint.</summary>
@@ -141,11 +60,12 @@ public class AccesoService : IAccesoService
         var resultado = new ResultadoEscaneoViewModel
         {
             Encontrado = true,
-            Mensaje = $"{cliente.Nombre} identificado correctamente.",
+            Mensaje = $"{cliente.NombreMostrar} identificado correctamente.",
             ClienteId = cliente.ClienteId,
             Nombre = cliente.Nombre,
             ApellidosFamilia = cliente.Familia?.ApellidosFamilia,
             Edad = cliente.Edad,
+            TieneFechaNacimiento = !cliente.SinFechaNacimiento,
             Inicial = cliente.Inicial,
             NotasMedicas = cliente.NotasMedicas,
             EstaDentro = entradaAbierta != null,
@@ -233,7 +153,7 @@ public class AccesoService : IAccesoService
             return resultado;
         }
 
-        resultado.NombreCliente = cliente.Nombre;
+        resultado.NombreCliente = cliente.NombreMostrar;
 
         // Control de presencia: no puede entrar si ya está dentro
         var entradaAbierta = await _context.EntradasHistorial
@@ -241,7 +161,7 @@ public class AccesoService : IAccesoService
 
         if (entradaAbierta)
         {
-            resultado.Mensaje = $"{cliente.Nombre} ya se encuentra dentro del parque. Registre primero su salida.";
+            resultado.Mensaje = $"{cliente.NombreMostrar} ya se encuentra dentro del parque. Registre primero su salida.";
             return resultado;
         }
 
@@ -288,7 +208,7 @@ public class AccesoService : IAccesoService
             case TipoAcceso.FidelidadGratis:
                 if ((cliente.FidelidadCuenta?.EntradasGratisGanadas ?? 0) <= 0)
                 {
-                    resultado.Mensaje = $"{cliente.Nombre} no tiene entradas gratis disponibles para canjear.";
+                    resultado.Mensaje = $"{cliente.NombreMostrar} no tiene entradas gratis disponibles para canjear.";
                     return resultado;
                 }
                 break;
@@ -296,7 +216,7 @@ public class AccesoService : IAccesoService
             case TipoAcceso.Membresia:
                 if (!cliente.Membresias.Any(m => m.Vigente))
                 {
-                    resultado.Mensaje = $"{cliente.Nombre} no cuenta con una membresía vigente.";
+                    resultado.Mensaje = $"{cliente.NombreMostrar} no cuenta con una membresía vigente.";
                     return resultado;
                 }
                 break;
@@ -402,8 +322,8 @@ public class AccesoService : IAccesoService
 
         resultado.Exito = true;
         resultado.Mensaje = resultado.PremioGanado
-            ? $"¡{cliente.Nombre} completó sus {checksParaPremio} visitas y ganó una entrada gratis!"
-            : $"Entrada registrada para {cliente.Nombre} a las {entrada.FechaHoraEntrada:HH:mm}.";
+            ? $"¡{cliente.NombreMostrar} completó sus {checksParaPremio} visitas y ganó una entrada gratis!"
+            : $"Entrada registrada para {cliente.NombreMostrar} a las {entrada.FechaHoraEntrada:HH:mm}.";
 
         return resultado;
     }
@@ -419,7 +339,7 @@ public class AccesoService : IAccesoService
             return resultado;
         }
 
-        resultado.NombreCliente = cliente.Nombre;
+        resultado.NombreCliente = cliente.NombreMostrar;
 
         var entradaAbierta = await _context.EntradasHistorial
             .Where(eh => eh.ClienteId == clienteId && eh.FechaHoraSalida == null)
@@ -428,7 +348,7 @@ public class AccesoService : IAccesoService
 
         if (entradaAbierta == null)
         {
-            resultado.Mensaje = $"{cliente.Nombre} no tiene una entrada activa dentro del parque.";
+            resultado.Mensaje = $"{cliente.NombreMostrar} no tiene una entrada activa dentro del parque.";
             return resultado;
         }
 
@@ -436,12 +356,8 @@ public class AccesoService : IAccesoService
         entradaAbierta.FechaHoraSalida = DateTime.Now;
         await _context.SaveChangesAsync();
 
-        await _biometria.RegistrarEventoAsync("SalidaManual",
-            $"Salida registrada manualmente para {cliente.Nombre} a las {entradaAbierta.FechaHoraSalida:HH:mm}.",
-            "Info", usuarioId, cliente.ClienteId, ip);
-
         resultado.Exito = true;
-        resultado.Mensaje = $"Salida registrada para {cliente.Nombre} a las {entradaAbierta.FechaHoraSalida:HH:mm}.";
+        resultado.Mensaje = $"Salida registrada para {cliente.NombreMostrar} a las {entradaAbierta.FechaHoraSalida:HH:mm}.";
 
         return resultado;
     }

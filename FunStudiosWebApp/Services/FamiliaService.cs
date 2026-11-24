@@ -53,11 +53,7 @@ public class FamiliaService : IFamiliaService
             CantidadTutores = f.Tutores.Count,
             TutoresTexto = string.Join(", ", f.Tutores.OrderByDescending(t => t.EsPrincipal).Select(t => t.Nombre)),
             CantidadNinos = f.Clientes.Count,
-            NinosDentro = ninosDentroPorFamilia.GetValueOrDefault(f.FamiliaId),
-            HuellaTutorEnrolada = f.Tutores.Any(t => t.HuellaTemplate != null),
-            TutorConHuellaNombre = f.Tutores
-                .FirstOrDefault(t => t.HuellaTemplate != null)
-                ?.Nombre
+            NinosDentro = ninosDentroPorFamilia.GetValueOrDefault(f.FamiliaId)
         })
         .Where(f => estado != "con_ninos_dentro" || f.NinosDentro > 0)
         .ToList();
@@ -88,8 +84,7 @@ public class FamiliaService : IFamiliaService
                 TutorId = t.TutorId,
                 Nombre = t.Nombre,
                 Telefono = t.Telefono,
-                EsPrincipal = t.EsPrincipal,
-                HuellaEnrolada = t.HuellaTemplate != null
+                EsPrincipal = t.EsPrincipal
             }).ToList();
 
         return new FamiliaDetalleViewModel
@@ -97,8 +92,6 @@ public class FamiliaService : IFamiliaService
             FamiliaId = familia.FamiliaId,
             ApellidosFamilia = familia.ApellidosFamilia,
             CodigoFamilia = familia.CodigoFamilia,
-            HuellaTutorEnrolada = tutores.Any(t => t.HuellaEnrolada),
-            TutorConHuellaNombre = tutores.FirstOrDefault(t => t.HuellaEnrolada)?.Nombre,
             TieneTutorPrincipal = tutores.Any(t => t.EsPrincipal),
             Tutores = tutores,
             Hijos = familia.Clientes
@@ -109,12 +102,44 @@ public class FamiliaService : IFamiliaService
                     Nombre = c.Nombre,
                     Inicial = c.Inicial,
                     Edad = c.Edad,
-                    HuellaEnrolada = c.HuellaNinoTemplate != null,
+                    TieneFechaNacimiento = !c.SinFechaNacimiento,
                     EstaDentro = entradasAbiertas.Contains(c.ClienteId),
                     ConteoChecks = c.FidelidadCuenta?.ConteoChecks ?? 0,
                     ChecksParaPremio = checksParaPremio
                 }).ToList()
         };
+    }
+
+    public async Task<(bool Exito, string Mensaje, int FamiliaId)> CrearAsync(FamiliaCrearViewModel modelo)
+    {
+        if (string.IsNullOrWhiteSpace(modelo.ApellidosFamilia))
+            return (false, "Los apellidos de la familia son obligatorios.", 0);
+
+        if (string.IsNullOrWhiteSpace(modelo.NombreTutor))
+            return (false, "El nombre del tutor es obligatorio.", 0);
+
+        if (string.IsNullOrWhiteSpace(modelo.TelefonoTutor))
+            return (false, "El teléfono del tutor es obligatorio.", 0);
+
+        var familia = new Familia
+        {
+            ApellidosFamilia = modelo.ApellidosFamilia.Trim(),
+            CodigoFamilia = await GenerarCodigoFamiliaAsync(),
+            Tutores = new List<Tutor>
+            {
+                new()
+                {
+                    Nombre = modelo.NombreTutor.Trim(),
+                    Telefono = modelo.TelefonoTutor.Trim(),
+                    EsPrincipal = true
+                }
+            }
+        };
+
+        _context.Familias.Add(familia);
+        await _context.SaveChangesAsync();
+
+        return (true, $"Familia '{familia.ApellidosFamilia}' creada correctamente.", familia.FamiliaId);
     }
 
     public async Task<(bool Exito, string Mensaje)> AgregarTutorAsync(int familiaId, string nombre, string telefono)
@@ -213,5 +238,29 @@ public class FamiliaService : IFamiliaService
 
         await _context.SaveChangesAsync();
         return (true, "Tutor eliminado.");
+    }
+
+    /// <summary>
+    /// Genera el siguiente código de familia "FAM-001" secuencial tomando el máximo
+    /// numérico existente y sumando 1 (el índice único de la BD evita duplicados).
+    /// </summary>
+    private async Task<string> GenerarCodigoFamiliaAsync()
+    {
+        var codigos = await _context.Familias
+            .Where(f => f.CodigoFamilia != null)
+            .Select(f => f.CodigoFamilia!)
+            .ToListAsync();
+
+        var maximo = 0;
+        foreach (var codigo in codigos)
+        {
+            if (int.TryParse(codigo.StartsWith("FAM-", StringComparison.OrdinalIgnoreCase)
+                    ? codigo[4..] : null, out var numero) && numero > maximo)
+            {
+                maximo = numero;
+            }
+        }
+
+        return $"FAM-{maximo + 1:000}";
     }
 }

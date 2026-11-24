@@ -14,10 +14,6 @@
             <p class="text-body-md text-on-surface-variant">
                 @(Model.CodigoFamilia ?? "Sin código")
                 · @Model.Tutores.Count @(Model.Tutores.Count == 1 ? "tutor" : "tutores")
-                @if (Model.HuellaTutorEnrolada)
-                {
-                    <text>· Huella del tutor: @(Model.TutorConHuellaNombre ?? "enrolada") ✓</text>
-                }
             </p>
         </div>
     </div>
@@ -50,13 +46,6 @@
                         @if (t.EsPrincipal)
                         {
                             <span class="font-label-sm text-primary bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap">principal</span>
-                        }
-                        @if (t.HuellaEnrolada)
-                        {
-                            <span class="font-label-sm text-secondary bg-secondary-fixed-dim/30 px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1"
-                                  title="Huella registrada para el ingreso de menores de 2 años (RF4)">
-                                <span class="material-symbols-outlined text-[14px]">fingerprint</span> huella ✓
-                            </span>
                         }
                         <details class="relative">
                             <summary class="inline-flex p-2 text-primary hover:bg-primary/10 rounded-full transition-colors cursor-pointer list-none" title="Editar tutor">
@@ -138,9 +127,8 @@
                    class="flex items-center gap-4 border border-surface-variant/40 hover:border-primary/60 rounded-lg p-stack-md transition-colors group">
                     <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">@h.Inicial</div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-bold text-on-surface group-hover:text-primary truncate">@h.Nombre (@h.Edad años)</p>
+                        <p class="font-bold text-on-surface group-hover:text-primary truncate">@h.NombreMostrar (@h.EdadTexto)</p>
                         <div class="flex items-center gap-2 mt-1 flex-wrap">
-                            <span class="material-symbols-outlined text-[16px] @(h.HuellaEnrolada ? "text-secondary" : "text-outline-variant")" title="Huella niño">fingerprint</span>
                             @if (h.EstaDentro)
                             {
                                 <span class="font-label-sm text-tertiary bg-tertiary-container/10 px-2 py-0.5 rounded-full border border-tertiary/20">Dentro del parque</span>

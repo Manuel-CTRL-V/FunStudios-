@@ -9,13 +9,11 @@ namespace FunStudiosWebApp.Services;
 public class ClienteService : IClienteService
 {
     private readonly FunStudiosContext _context;
-    private readonly IBiometriaService _biometria;
     private readonly IConfiguracionService _configuracion;
 
-    public ClienteService(FunStudiosContext context, IBiometriaService biometria, IConfiguracionService configuracion)
+    public ClienteService(FunStudiosContext context, IConfiguracionService configuracion)
     {
         _context = context;
-        _biometria = biometria;
         _configuracion = configuracion;
     }
 
@@ -64,6 +62,7 @@ public class ClienteService : IClienteService
                 Nombre = c.Nombre,
                 Inicial = c.Inicial,
                 Edad = c.Edad,
+                TieneFechaNacimiento = !c.SinFechaNacimiento,
                 ApellidosFamilia = c.Familia?.ApellidosFamilia ?? string.Empty,
                 CodigoFamilia = c.Familia?.CodigoFamilia,
                 Nacionalidad = c.Nacionalidad,
@@ -131,10 +130,9 @@ public class ClienteService : IClienteService
             Inicial = cliente.Inicial,
             FechaNacimiento = cliente.FechaNacimiento,
             Edad = cliente.Edad,
+            TieneFechaNacimiento = !cliente.SinFechaNacimiento,
             NotasMedicas = cliente.NotasMedicas,
             Nacionalidad = cliente.Nacionalidad,
-            HuellaEnrolada = cliente.HuellaNinoTemplate != null,
-            HuellaTutorEnrolada = cliente.Familia?.Tutores.Any(t => t.HuellaTemplate != null) ?? false,
             FamiliaId = cliente.FamiliaId,
             ApellidosFamilia = cliente.Familia?.ApellidosFamilia ?? string.Empty,
             CodigoFamilia = cliente.Familia?.CodigoFamilia,
@@ -146,8 +144,7 @@ public class ClienteService : IClienteService
                     TutorId = t.TutorId,
                     Nombre = t.Nombre,
                     Telefono = t.Telefono,
-                    EsPrincipal = t.EsPrincipal,
-                    HuellaEnrolada = t.HuellaTemplate != null
+                    EsPrincipal = t.EsPrincipal
                 })
                 .ToList(),
             ConteoChecks = cliente.FidelidadCuenta?.ConteoChecks ?? 0,
@@ -212,83 +209,30 @@ public class ClienteService : IClienteService
             .ToListAsync();
     }
 
-    public async Task<(bool Exito, string Mensaje, int ClienteId)> RegistrarAsync(
-        ClienteCrearViewModel modelo, int? usuarioId, string ip)
+    public async Task<(bool Exito, string Mensaje, int ClienteId)> RegistrarAsync(ClienteCrearViewModel modelo)
     {
-        // ---------- Validaciones (RF1, RF2, RF3) ----------
-        if (!modelo.FechaNacimiento.HasValue)
-            return (false, "La fecha de nacimiento del niño es obligatoria.", 0);
+        if (modelo.FamiliaExistenteId == null)
+            return (false, "Seleccione la familia del cliente.", 0);
 
-        if (modelo.FechaNacimiento.Value > DateOnly.FromDateTime(DateTime.Now))
+        var familiaExiste = await _context.Familias
+            .AnyAsync(f => f.FamiliaId == modelo.FamiliaExistenteId.Value);
+
+        if (!familiaExiste)
+            return (false, "La familia seleccionada no existe.", 0);
+
+        if (modelo.FechaNacimiento.HasValue &&
+            modelo.FechaNacimiento.Value > DateOnly.FromDateTime(DateTime.Now))
+        {
             return (false, "La fecha de nacimiento no puede ser futura.", 0);
-
-        if (string.IsNullOrWhiteSpace(modelo.HuellaNinoTemplateBase64))
-            return (false, "Complete el enrolamiento biométrico: faltan muestras de huella (se requieren 3).", 0);
-
-        byte[] templateNino;
-        try { templateNino = Convert.FromBase64String(modelo.HuellaNinoTemplateBase64); }
-        catch (FormatException) { return (false, "El template biométrico recibido no es válido.", 0); }
-
-        // Evitar enrolar la misma huella dos veces
-        var duplicadoNino = await _context.Clientes.AnyAsync(c => c.HuellaNinoTemplate!.SequenceEqual(templateNino));
-        if (duplicadoNino)
-            return (false, "Esta huella ya está registrada en el sistema.", 0);
-
-        // ---------- Familia nueva o existente (RF2) ----------
-        Familia familia;
-
-        if (modelo.UsarFamiliaExistente)
-        {
-            var familiaExistente = await _context.Familias
-                .Include(f => f.Tutores)
-                .FirstOrDefaultAsync(f => f.FamiliaId == (modelo.FamiliaExistenteId ?? 0));
-            if (familiaExistente == null)
-                return (false, "Seleccione una familia válida.", 0);
-            familia = familiaExistente;
-        }
-        else
-        {
-            if (string.IsNullOrWhiteSpace(modelo.ApellidosFamilia))
-                return (false, "Los apellidos de la familia son obligatorios.", 0);
-            if (string.IsNullOrWhiteSpace(modelo.TelefonoTutor1))
-                return (false, "El teléfono del tutor 1 es obligatorio.", 0);
-
-            familia = new Familia
-            {
-                ApellidosFamilia = modelo.ApellidosFamilia.Trim(),
-                CodigoFamilia = await GenerarCodigoFamiliaAsync(),
-                Tutores = new List<Tutor>
-                {
-                    new()
-                    {
-                        Nombre = string.IsNullOrWhiteSpace(modelo.NombreTutor1) ? "Tutor 1" : modelo.NombreTutor1.Trim(),
-                        Telefono = modelo.TelefonoTutor1.Trim(),
-                        EsPrincipal = true
-                    }
-                }
-            };
-
-            // Segundo tutor opcional al crear la familia
-            if (!string.IsNullOrWhiteSpace(modelo.TelefonoTutor2))
-            {
-                familia.Tutores.Add(new Tutor
-                {
-                    Nombre = string.IsNullOrWhiteSpace(modelo.NombreTutor2) ? "Tutor 2" : modelo.NombreTutor2.Trim(),
-                    Telefono = modelo.TelefonoTutor2.Trim(),
-                    EsPrincipal = false
-                });
-            }
-            _context.Familias.Add(familia);
         }
 
         var cliente = new Cliente
         {
-            Nombre = modelo.Nombre.Trim(),
-            FechaNacimiento = modelo.FechaNacimiento.Value,
+            FamiliaId = modelo.FamiliaExistenteId.Value,
+            Nombre = string.IsNullOrWhiteSpace(modelo.Nombre) ? string.Empty : modelo.Nombre.Trim(),
+            FechaNacimiento = modelo.FechaNacimiento ?? Cliente.FechaNacimientoSinRegistrar,
             NotasMedicas = string.IsNullOrWhiteSpace(modelo.NotasMedicas) ? null : modelo.NotasMedicas.Trim(),
-            Nacionalidad = string.IsNullOrWhiteSpace(modelo.Nacionalidad) ? null : modelo.Nacionalidad.Trim(),
-            HuellaNinoTemplate = templateNino,
-            Familia = familia
+            Nacionalidad = string.IsNullOrWhiteSpace(modelo.Nacionalidad) ? null : modelo.Nacionalidad.Trim()
         };
 
         _context.Clientes.Add(cliente);
@@ -302,44 +246,7 @@ public class ClienteService : IClienteService
 
         await _context.SaveChangesAsync();
 
-        // ---------- Enrolamiento del tutor (RF4: obligatorio para niños < 2 años) ----------
-        var edad = cliente.Edad;
-        if (edad < 2 && string.IsNullOrWhiteSpace(modelo.HuellaTutorTemplateBase64))
-            return (false, "Los niños menores de 2 años requieren la huella biométrica de un tutor para ingresar.", cliente.ClienteId);
-
-        if (!string.IsNullOrWhiteSpace(modelo.HuellaTutorTemplateBase64))
-        {
-            try
-            {
-                var templateTutor = Convert.FromBase64String(modelo.HuellaTutorTemplateBase64);
-                var duplicadoTutor = await _context.Tutores.AnyAsync(t =>
-                    t.HuellaTemplate != null && t.HuellaTemplate.SequenceEqual(templateTutor));
-                if (duplicadoTutor)
-                    return (false, "Esta huella de tutor ya está registrada en el sistema.", cliente.ClienteId);
-
-                // Se asigna al tutor principal de la familia (RF4); si no hay principal,
-                // se usa el primer tutor registrado
-                var tutorConHuella = familia.Tutores.FirstOrDefault(t => t.EsPrincipal)
-                                     ?? familia.Tutores.FirstOrDefault();
-                if (tutorConHuella == null)
-                    return (false, "La familia no tiene tutores registrados para guardar la huella.", cliente.ClienteId);
-
-                tutorConHuella.HuellaTemplate = templateTutor;
-                await _context.SaveChangesAsync();
-            }
-            catch (FormatException)
-            {
-                // Template corrupto: se omite pero no bloquea el registro del niño.
-            }
-        }
-
-        await _biometria.RegistrarEventoAsync("Enrolamiento",
-            $"Enrolamiento completado para '{cliente.Nombre}' ({familia.ApellidosFamilia}). " +
-            $"Huella niño: OK. " +
-            $"Huella tutor: {(familia.Tutores.Any(t => t.HuellaTemplate != null) ? "OK" : "No aplicable")}.",
-            "Info", usuarioId, cliente.ClienteId, ip);
-
-        return (true, $"Cliente '{cliente.Nombre}' registrado y enrolado correctamente.", cliente.ClienteId);
+        return (true, $"{cliente.NombreMostrar} registrado correctamente.", cliente.ClienteId);
     }
 
     public async Task<(bool Exito, string Mensaje)> ActualizarAsync(ClienteEditarViewModel modelo)
@@ -350,14 +257,14 @@ public class ClienteService : IClienteService
         if (cliente == null)
             return (false, "Cliente no encontrado.");
 
-        if (!modelo.FechaNacimiento.HasValue)
-            return (false, "La fecha de nacimiento es obligatoria.");
-
-        if (modelo.FechaNacimiento.Value > DateOnly.FromDateTime(DateTime.Now))
+        if (modelo.FechaNacimiento.HasValue &&
+            modelo.FechaNacimiento.Value > DateOnly.FromDateTime(DateTime.Now))
+        {
             return (false, "La fecha de nacimiento no puede ser futura.");
+        }
 
-        cliente.Nombre = modelo.Nombre.Trim();
-        cliente.FechaNacimiento = modelo.FechaNacimiento.Value;
+        cliente.Nombre = string.IsNullOrWhiteSpace(modelo.Nombre) ? string.Empty : modelo.Nombre.Trim();
+        cliente.FechaNacimiento = modelo.FechaNacimiento ?? Cliente.FechaNacimientoSinRegistrar;
         cliente.NotasMedicas = string.IsNullOrWhiteSpace(modelo.NotasMedicas) ? null : modelo.NotasMedicas.Trim();
         cliente.Nacionalidad = string.IsNullOrWhiteSpace(modelo.Nacionalidad) ? null : modelo.Nacionalidad.Trim();
 
@@ -365,27 +272,47 @@ public class ClienteService : IClienteService
         return (true, "Datos actualizados correctamente.");
     }
 
-    /// <summary>
-    /// Genera el siguiente código de familia "FAM-001" secuencial tomando el máximo
-    /// numérico existente y sumando 1 (el índice único de la BD evita duplicados).
-    /// </summary>
-    private async Task<string> GenerarCodigoFamiliaAsync()
+    public async Task<List<ClienteBusquedaViewModel>> BuscarParaCheckpointAsync(string? texto, int limite = 20)
     {
-        var codigos = await _context.Familias
-            .Where(f => f.CodigoFamilia != null)
-            .Select(f => f.CodigoFamilia!)
-            .ToListAsync();
+        limite = Math.Clamp(limite, 1, 50);
 
-        var maximo = 0;
-        foreach (var codigo in codigos)
+        var consulta = _context.Clientes
+            .Include(c => c.Familia)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(texto))
         {
-            if (int.TryParse(codigo.StartsWith("FAM-", StringComparison.OrdinalIgnoreCase)
-                    ? codigo[4..] : null, out var numero) && numero > maximo)
-            {
-                maximo = numero;
-            }
+            var q = texto.Trim().ToLower();
+            consulta = consulta.Where(c =>
+                c.Nombre.ToLower().Contains(q) ||
+                c.Familia!.ApellidosFamilia.ToLower().Contains(q) ||
+                (c.Familia!.CodigoFamilia != null && c.Familia!.CodigoFamilia.ToLower().Contains(q)));
         }
 
-        return $"FAM-{maximo + 1:000}";
+        var clientes = await consulta
+            .OrderBy(c => c.Nombre)
+            .ThenBy(c => c.ClienteId)
+            .Take(limite)
+            .ToListAsync();
+
+        var ids = clientes.Select(c => c.ClienteId).ToList();
+
+        var dentro = (await _context.EntradasHistorial
+                .Where(eh => eh.FechaHoraSalida == null && ids.Contains(eh.ClienteId))
+                .Select(eh => eh.ClienteId)
+                .Distinct()
+                .ToListAsync())
+            .ToHashSet();
+
+        return clientes.Select(c => new ClienteBusquedaViewModel
+        {
+            ClienteId = c.ClienteId,
+            Nombre = c.Nombre,
+            Inicial = c.Inicial,
+            ApellidosFamilia = c.Familia?.ApellidosFamilia ?? string.Empty,
+            CodigoFamilia = c.Familia?.CodigoFamilia,
+            EdadTexto = c.EdadTexto,
+            EstaDentro = dentro.Contains(c.ClienteId)
+        }).ToList();
     }
 }

@@ -1,13 +1,13 @@
 @model ClienteEditarViewModel
 @{
-    ViewData["Title"] = $"Editar · {Model.Nombre}";
+    ViewData["Title"] = $"Editar · {Model.NombreMostrar}";
 }
 
 <div class="max-w-3xl mx-auto">
     <div class="mb-stack-lg">
         <h2 class="text-headline-lg text-on-background">Editar Cliente</h2>
         <p class="text-body-md text-on-surface-variant mt-1">
-            Datos de <b>@Model.Nombre</b> y teléfonos de su familia. El enrolamiento biométrico no se modifica aquí.
+            Datos de <b>@Model.NombreMostrar</b>. Los tutores se administran desde el perfil de la familia.
         </p>
     </div>
 
@@ -37,6 +37,7 @@
                 <input asp-for="FechaNacimiento" type="date" max="@DateTime.Now.ToString("yyyy-MM-dd")"
                        class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 px-4 h-[48px] focus:outline-none" />
                 <span asp-validation-for="FechaNacimiento" class="font-label-sm text-error ml-4"></span>
+                <p class="font-label-sm text-on-surface-variant ml-4">Déjela vacía si no se conoce; se mostrará como “Edad no registrada”.</p>
             </div>
 
             <div class="flex flex-col gap-1">

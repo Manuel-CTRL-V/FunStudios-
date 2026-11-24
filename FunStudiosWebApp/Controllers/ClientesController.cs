@@ -1,4 +1,3 @@
-using System.Net.Http;
 using FunStudiosWebApp.Services;
 using FunStudiosWebApp.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -6,21 +5,16 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FunStudiosWebApp.Controllers;
 
-/// <summary>Gesti??n de clientes: listado, perfil, registro con enrolamiento y edici??n (RF1 a RF4).</summary>
+/// <summary>Gestión de clientes: listado, perfil, registro y edición (RF1, RF2).</summary>
 [Authorize]
 public class ClientesController : Controller
 {
     private readonly IClienteService _clienteService;
-    private readonly IBiometriaService _biometria;
 
-    public ClientesController(IClienteService clienteService, IBiometriaService biometria)
+    public ClientesController(IClienteService clienteService)
     {
         _clienteService = clienteService;
-        _biometria = biometria;
     }
-
-    private int? UsuarioId =>
-        int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id) ? id : null;
 
     // GET: /Clientes
     public async Task<IActionResult> Index(string? busqueda, string? estado)
@@ -42,14 +36,13 @@ public class ClientesController : Controller
         return View(cliente);
     }
 
-// GET: /Clientes/Crear
+    // GET: /Clientes/Crear
     public async Task<IActionResult> Crear(int? familiaId)
     {
         var familias = await _clienteService.ObtenerFamiliasAsync();
         var modelo = new ClienteCrearViewModel
         {
             FamiliasExistentes = familias,
-            UsarFamiliaExistente = familiaId != null,
             FamiliaExistenteId = familiaId
         };
         return View(modelo);
@@ -62,8 +55,9 @@ public class ClientesController : Controller
     {
         modelo.FamiliasExistentes = await _clienteService.ObtenerFamiliasAsync();
 
-        var (exito, mensaje, clienteId) = await _clienteService.RegistrarAsync(
-            modelo, UsuarioId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
+        if (!ModelState.IsValid) return View(modelo);
+
+        var (exito, mensaje, clienteId) = await _clienteService.RegistrarAsync(modelo);
 
         TempData[exito ? "Mensaje" : "Error"] = mensaje;
 
@@ -84,7 +78,7 @@ public class ClientesController : Controller
         {
             ClienteId = detalle.ClienteId,
             Nombre = detalle.Nombre,
-            FechaNacimiento = detalle.FechaNacimiento,
+            FechaNacimiento = detalle.TieneFechaNacimiento ? detalle.FechaNacimiento : null,
             NotasMedicas = detalle.NotasMedicas,
             Nacionalidad = detalle.Nacionalidad,
             FamiliaId = detalle.FamiliaId
@@ -105,41 +99,4 @@ public class ClientesController : Controller
 
         return RedirectToAction("Detalles", new { id });
     }
-
-// POST: /Clientes/Enrolar
-    /// <summary>
-    /// Dispara el enrolamiento real en el lector remoto: captura las muestras que el
-    /// usuario coloca en la PC de recepción y devuelve el template (Base64) listo
-    /// para guardar en el cliente/familia. La vista pide colocar el dedo N veces.
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Enrolar(int muestras = 4)
-    {
-        try
-        {
-            var templateBase64 = await _biometria.EnrolarAsync(muestras);
-            if (templateBase64 == null)
-            {
-                return Json(new { ok = false, mensaje = "No se pudo enrolar la huella. Verifique el lector y repita." });
-            }
-            return Json(new { ok = true, templateBase64 });
-        }
-        catch (HttpRequestException ex)
-        {
-            var mensaje = ex.StatusCode?.ToString() == "RequestTimeout"
-                ? "No se capturaron las muestras a tiempo. Coloque el dedo en el lector y vuelva a intentar."
-                : "Error al comunicarse con el lector biométrico.";
-            await _biometria.RegistrarEventoAsync("Enrolamiento",
-                $"Error al comunicarse con el lector: {ex.Message}", "Error");
-            return Json(new { ok = false, mensaje });
-        }
-        catch (Exception ex)
-        {
-            await _biometria.RegistrarEventoAsync("Enrolamiento",
-                $"Error al comunicarse con el lector: {ex.Message}", "Error");
-            return Json(new { ok = false, mensaje = "Error al comunicarse con el lector biométrico." });
-        }
-    }
 }
-

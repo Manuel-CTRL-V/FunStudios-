@@ -1,14 +1,14 @@
 namespace FunStudiosWebApp.ViewModels;
 
 /// <summary>
-/// Resultado de un escaneo en el checkpoint (RF5). Contiene todo lo que la
+/// Resultado de la búsqueda manual en el checkpoint (RF5). Contiene todo lo que la
 /// recepción necesita para decidir el siguiente paso sin recargar la página.
 /// </summary>
 public class ResultadoEscaneoViewModel
 {
     public bool Encontrado { get; set; }
 
-    /// <summary>Mensaje para mostrar bajo el escáner (éxito o motivo del fallo).</summary>
+    /// <summary>Mensaje para mostrar en la tarjeta del checkpoint (éxito o motivo del fallo).</summary>
     public string Mensaje { get; set; } = string.Empty;
 
     // Datos del cliente identificado
@@ -17,8 +17,13 @@ public class ResultadoEscaneoViewModel
     public string? Nombre { get; set; }
     public string? ApellidosFamilia { get; set; }
     public int Edad { get; set; }
+    public bool TieneFechaNacimiento { get; set; } = true;
     public string Inicial { get; set; } = "?";
     public string? NotasMedicas { get; set; }
+
+    public string NombreMostrar => string.IsNullOrWhiteSpace(Nombre) ? $"Cliente #{ClienteId}" : Nombre!;
+
+    public string EdadTexto => TieneFechaNacimiento ? $"{Edad} años" : "Edad no registrada";
 
     // Control de presencia
 

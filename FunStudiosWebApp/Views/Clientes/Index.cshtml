@@ -77,7 +77,7 @@
                                 <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">@c.Inicial</div>
                                 <div>
                                     <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@c.ClienteId"
-                                       class="font-bold text-on-background hover:text-primary block">@c.Nombre (@c.Edad años)</a>
+                                       class="font-bold text-on-background hover:text-primary block">@c.NombreMostrar (@c.EdadTexto)</a>
                                     @if (c.TieneNotaMedica)
                                     {
                                         <span class="font-label-sm text-on-surface-variant bg-[#ffb300]/15 text-[#b26a00] px-2 py-0.5 rounded-full mt-1 inline-block">

@@ -1,6 +1,6 @@
 namespace FunStudiosWebApp.ViewModels;
 
-/// <summary>Métricas del panel de control (RF13) + estado del lector.</summary>
+/// <summary>Métricas del panel de control (RF13).</summary>
 public class DashboardViewModel
 {
     public int NinosDentro { get; set; }
@@ -16,13 +16,10 @@ public class DashboardViewModel
     /// <summary>Meta de checks de fidelidad leída de Parametros (para el modal de premio).</summary>
     public int ChecksParaPremio { get; set; } = 8;
 
-    public string LectorNombre { get; set; } = string.Empty;
-    public bool LectorConectado { get; set; }
-
     public List<MovimientoRecienteViewModel> EscaneosRecientes { get; set; } = new();
 }
 
-/// <summary>Un escaneo reciente para la lista "Escaneos Recientes".</summary>
+/// <summary>Un movimiento reciente para la lista "Movimientos Recientes".</summary>
 public class MovimientoRecienteViewModel
 {
     public int EntradaId { get; set; }

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace FunStudiosWebApp.ViewModels;
 
 /// <summary>Lista de nacionalidades para el desplegable del formulario (default Dominicana).</summary>
@@ -20,10 +22,15 @@ public class ClienteListadoItemViewModel
     public string Nombre { get; set; } = string.Empty;
     public string Inicial { get; set; } = "?";
     public int Edad { get; set; }
+    public bool TieneFechaNacimiento { get; set; } = true;
     public string ApellidosFamilia { get; set; } = string.Empty;
     public string? CodigoFamilia { get; set; }
     public string? Nacionalidad { get; set; }
     public bool TieneNotaMedica { get; set; }
+
+    public string NombreMostrar => string.IsNullOrWhiteSpace(Nombre) ? $"Cliente #{ClienteId}" : Nombre;
+
+    public string EdadTexto => TieneFechaNacimiento ? $"{Edad} años" : "Edad no registrada";
 
     // Fidelidad (RF8)
     public byte ConteoChecks { get; set; }
@@ -45,10 +52,13 @@ public class ClienteDetalleViewModel
     public string Inicial { get; set; } = "?";
     public DateOnly FechaNacimiento { get; set; }
     public int Edad { get; set; }
+    public bool TieneFechaNacimiento { get; set; } = true;
     public string? NotasMedicas { get; set; }
     public string? Nacionalidad { get; set; }
-    public bool HuellaEnrolada { get; set; }
-    public bool HuellaTutorEnrolada { get; set; }
+
+    public string NombreMostrar => string.IsNullOrWhiteSpace(Nombre) ? $"Cliente #{ClienteId}" : Nombre;
+
+    public string EdadTexto => TieneFechaNacimiento ? $"{Edad} años" : "Edad no registrada";
 
     // Familia
     public int FamiliaId { get; set; }
@@ -127,43 +137,21 @@ public class VentaItemViewModel
     public string Descripcion { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// Formulario de registro + enrolamiento (RF1, RF2, RF3, RF4).
-/// Los templates llegan como Base64 desde la captura simulada del navegador.
-/// </summary>
+/// <summary>Formulario de registro de un cliente dentro de una familia existente (RF1, RF2).</summary>
 public class ClienteCrearViewModel
 {
-    // Familia: nueva o existente
-
-    public bool UsarFamiliaExistente { get; set; }
-
+    /// <summary>Familia a la que pertenece el cliente (obligatoria).</summary>
+    [Required(ErrorMessage = "Seleccione la familia del cliente.")]
     public int? FamiliaExistenteId { get; set; }
 
     public List<FamiliaOpcionViewModel> FamiliasExistentes { get; set; } = new();
 
-    // Datos de la familia nueva
+    // Datos del niño (todos opcionales)
 
-    public string ApellidosFamilia { get; set; } = string.Empty;
-
-    /// <summary>Nombre propio del tutor principal (quien normalmente acompaña al niño).</summary>
-    public string? NombreTutor1 { get; set; }
-    public string TelefonoTutor1 { get; set; } = string.Empty;
-
-    public string? NombreTutor2 { get; set; }
-    public string? TelefonoTutor2 { get; set; }
-
-    // Datos del niño
-
-    public string Nombre { get; set; } = string.Empty;
+    public string? Nombre { get; set; }
     public DateOnly? FechaNacimiento { get; set; }
     public string? NotasMedicas { get; set; }
     public string? Nacionalidad { get; set; }
-
-    // Enrolamiento biométrico
-
-    public string? HuellaNinoTemplateBase64 { get; set; }
-    public bool ConHuellaTutor { get; set; }
-    public string? HuellaTutorTemplateBase64 { get; set; }
 }
 
 /// <summary>Formulario de edición de datos básicos del cliente (los tutores se editan en el perfil de familia).</summary>
@@ -175,6 +163,8 @@ public class ClienteEditarViewModel
     public string? NotasMedicas { get; set; }
     public string? Nacionalidad { get; set; }
     public int FamiliaId { get; set; }
+
+    public string NombreMostrar => string.IsNullOrWhiteSpace(Nombre) ? $"Cliente #{ClienteId}" : Nombre;
 }
 
 /// <summary>Opción para el selector de "familia existente" del formulario de registro.</summary>
@@ -193,7 +183,6 @@ public class TutorViewModel
     public string Nombre { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
     public bool EsPrincipal { get; set; }
-    public bool HuellaEnrolada { get; set; }
 }
 
 /// <summary>Tarjeta del listado de familias (apartado Familias).</summary>
@@ -206,8 +195,6 @@ public class FamiliaListadoItemViewModel
     public string TutoresTexto { get; set; } = string.Empty;
     public int CantidadNinos { get; set; }
     public int NinosDentro { get; set; }
-    public bool HuellaTutorEnrolada { get; set; }
-    public string? TutorConHuellaNombre { get; set; }
 }
 
 /// <summary>Perfil completo de una familia (apartado Familias).</summary>
@@ -216,8 +203,6 @@ public class FamiliaDetalleViewModel
     public int FamiliaId { get; set; }
     public string ApellidosFamilia { get; set; } = string.Empty;
     public string? CodigoFamilia { get; set; }
-    public bool HuellaTutorEnrolada { get; set; }
-    public string? TutorConHuellaNombre { get; set; }
     public bool TieneTutorPrincipal { get; set; }
     public List<TutorViewModel> Tutores { get; set; } = new();
     public List<HijoFamiliaItemViewModel> Hijos { get; set; } = new();
@@ -230,8 +215,39 @@ public class HijoFamiliaItemViewModel
     public string Nombre { get; set; } = string.Empty;
     public string Inicial { get; set; } = "?";
     public int Edad { get; set; }
-    public bool HuellaEnrolada { get; set; }
+    public bool TieneFechaNacimiento { get; set; } = true;
     public bool EstaDentro { get; set; }
     public byte ConteoChecks { get; set; }
     public int ChecksParaPremio { get; set; } = 8;
+
+    public string NombreMostrar => string.IsNullOrWhiteSpace(Nombre) ? $"Cliente #{ClienteId}" : Nombre;
+
+    public string EdadTexto => TieneFechaNacimiento ? $"{Edad} años" : "Edad no registrada";
+}
+
+/// <summary>Formulario de creación de una familia con su tutor principal (RF2).</summary>
+public class FamiliaCrearViewModel
+{
+    [Required(ErrorMessage = "Los apellidos de la familia son obligatorios.")]
+    public string ApellidosFamilia { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El nombre del tutor es obligatorio.")]
+    public string NombreTutor { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El teléfono del tutor es obligatorio.")]
+    public string TelefonoTutor { get; set; } = string.Empty;
+}
+
+/// <summary>Resultado de la búsqueda manual del checkpoint.</summary>
+public class ClienteBusquedaViewModel
+{
+    public int ClienteId { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string Inicial { get; set; } = "?";
+    public string ApellidosFamilia { get; set; } = string.Empty;
+    public string? CodigoFamilia { get; set; }
+    public string EdadTexto { get; set; } = string.Empty;
+    public bool EstaDentro { get; set; }
+
+    public string NombreMostrar => string.IsNullOrWhiteSpace(Nombre) ? $"Cliente #{ClienteId}" : Nombre;
 }

@@ -9,13 +9,11 @@ namespace FunStudiosWebApp.Services;
 public class ReporteService : IReporteService
 {
     private readonly FunStudiosContext _context;
-    private readonly IBiometriaService _biometria;
     private readonly IConfiguracionService _configuracion;
 
-    public ReporteService(FunStudiosContext context, IBiometriaService biometria, IConfiguracionService configuracion)
+    public ReporteService(FunStudiosContext context, IConfiguracionService configuracion)
     {
         _context = context;
-        _biometria = biometria;
         _configuracion = configuracion;
     }
 
@@ -50,39 +48,32 @@ public class ReporteService : IReporteService
             GratisCanjeadasTotal = gratisCanjeadas,
             GratisDisponiblesSaldo = gratisSaldo,
             ChecksParaPremio = checksParaPremio,
-            LectorNombre = "Lector biométrico",
-            LectorConectado = false,
             EscaneosRecientes = escaneosRecientes
         };
     }
 
-    /// <summary>Últimos movimientos de hoy para la lista "Escaneos Recientes" del checkpoint.</summary>
+    /// <summary>Últimos movimientos de hoy para la lista "Movimientos Recientes" del checkpoint.</summary>
     private async Task<List<MovimientoRecienteViewModel>> ObtenerMovimientosRecientesAsync(int cantidad)
     {
-        var entradasTask = _context.EntradasHistorial
+        var entradas = await _context.EntradasHistorial
             .Include(eh => eh.Cliente)
             .Include(eh => eh.TipoAcceso)
             .OrderByDescending(eh => eh.FechaHoraEntrada)
             .Take(cantidad)
             .ToListAsync();
 
-        var salidasTask = _context.EntradasHistorial
+        var salidas = await _context.EntradasHistorial
             .Where(eh => eh.FechaHoraSalida != null)
             .Include(eh => eh.Cliente)
             .OrderByDescending(eh => eh.FechaHoraSalida)
             .Take(cantidad)
             .ToListAsync();
 
-        await Task.WhenAll(entradasTask, salidasTask);
-
-        var entradas = await entradasTask;
-        var salidas = await salidasTask;
-
         return entradas.Select(eh => new MovimientoRecienteViewModel
         {
             EntradaId = eh.EntradaId,
             ClienteId = eh.ClienteId,
-            NombreCliente = eh.Cliente!.Nombre,
+            NombreCliente = eh.Cliente!.NombreMostrar,
             Inicial = eh.Cliente.Inicial,
             EtiquetaMovimiento = eh.TipoAcceso?.NombreAcceso ?? string.Empty,
             Hora = eh.FechaHoraEntrada,
@@ -92,7 +83,7 @@ public class ReporteService : IReporteService
         {
             EntradaId = eh.EntradaId,
             ClienteId = eh.ClienteId,
-            NombreCliente = eh.Cliente!.Nombre,
+            NombreCliente = eh.Cliente!.NombreMostrar,
             Inicial = eh.Cliente.Inicial,
             EtiquetaMovimiento = "Salida",
             Hora = eh.FechaHoraSalida!.Value,
@@ -156,7 +147,7 @@ public class ReporteService : IReporteService
             {
                 EntradaId = eh.EntradaId,
                 ClienteId = eh.ClienteId,
-                NombreCliente = eh.Cliente?.Nombre ?? string.Empty,
+                NombreCliente = eh.Cliente?.NombreMostrar ?? $"Cliente #{eh.ClienteId}",
                 ApellidosFamilia = eh.Familia?.ApellidosFamilia ?? string.Empty,
                 FechaHoraEntrada = eh.FechaHoraEntrada,
                 FechaHoraSalida = eh.FechaHoraSalida,
@@ -209,7 +200,9 @@ public class ReporteService : IReporteService
         VentaId = v.VentaId,
         FechaVenta = v.FechaVenta,
         ClienteId = v.ClienteId,
-        NombreCliente = v.Cliente?.Nombre ?? $"Cliente #{v.ClienteId}",
+        NombreCliente = string.IsNullOrWhiteSpace(v.Cliente?.Nombre)
+            ? $"Cliente #{v.ClienteId}"
+            : v.Cliente!.Nombre,
         MetodoPagoNombre = v.MetodoPago?.NombreMetodo ?? string.Empty,
         Monto = v.Monto,
         Descripcion = v.Descripcion
@@ -295,6 +288,11 @@ public class ReporteService : IReporteService
             .Take(5)
             .ToListAsync();
 
+        foreach (var cliente in clientesFrecuentes.Where(c => string.IsNullOrWhiteSpace(c.NombreCliente)))
+        {
+            cliente.NombreCliente = $"Cliente #{cliente.ClienteId}";
+        }
+
         return new InteligenciaNegocioViewModel
         {
             Resumen = resumen,
@@ -356,7 +354,7 @@ public class ReporteService : IReporteService
             MensajeDetalle = lb.MensajeDetalle,
             IPEstacionTrabajo = lb.IPEstacionTrabajo,
             UsuarioNombre = lb.Usuario?.NombreCompleto,
-            ClienteNombre = lb.Cliente != null ? $"{lb.Cliente.Nombre} ({lb.Cliente.Familia?.ApellidosFamilia})" : null
+            ClienteNombre = lb.Cliente != null ? $"{lb.Cliente.NombreMostrar} ({lb.Cliente.Familia?.ApellidosFamilia})" : null
         }).ToList();
     }
 }

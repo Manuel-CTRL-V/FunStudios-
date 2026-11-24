@@ -5,43 +5,46 @@
 
 <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
 
-    <!-- ===== Columna izquierda: Checkpoint biométrico (RF5) ===== -->
+    <!-- ===== Columna izquierda: Checkpoint manual (RF5) ===== -->
     <div class="md:col-span-4 flex flex-col gap-gutter">
 
-        <!-- Tarjeta de escaneo -->
+        <!-- Tarjeta de búsqueda manual (RF5: identificación sin huella) -->
         <div class="bg-surface-container-lowest rounded-xl p-gutter shadow-soft border-2 border-surface-variant relative overflow-hidden">
             <div class="absolute inset-0 bg-primary opacity-5"></div>
 
             <h2 class="relative text-headline-sm text-primary mb-stack-md flex items-center justify-center gap-2">
-                <span class="material-symbols-outlined">settings_remote</span>
-                Escanear Huella
+                <span class="material-symbols-outlined">person_search</span>
+                Buscar Cliente
             </h2>
 
-            <!-- Estado: esperando -->
-            <div id="scan-idle" class="relative flex flex-col items-center py-stack-md">
-                <button type="button" onclick="escanear()"
-                        class="w-48 h-48 bg-surface-container-high rounded-full flex items-center justify-center pulse-ring border-4 border-apple-green cursor-pointer btn-press"
-                        style="border-color:#7ddc7a; color:#268630;"
-                        title="Simular lectura de huella">
-                    <span class="material-symbols-outlined" style="font-size:80px;">fingerprint</span>
-                </button>
-                <p class="text-body-lg text-on-surface font-bold mt-stack-md">Esperando entrada...</p>
-                <p class="font-label-sm text-label-sm text-on-surface-variant mt-unit">Coloque el dedo del niño en el escáner</p>
+            <!-- Estado: buscando -->
+            <div id="scan-idle" class="relative flex flex-col gap-stack-sm">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+                    <input id="busqueda-cliente" type="search" autocomplete="off"
+                           placeholder="Nombre, familia o FAM-001"
+                           oninput="buscarClientes(this.value)"
+                           class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                </div>
+                <p class="font-label-sm text-on-surface-variant">
+                    Escriba al menos 2 caracteres y seleccione el cliente para registrar su entrada o salida.
+                </p>
+                <ul id="resultados-busqueda" class="flex flex-col gap-1 max-h-80 overflow-y-auto hide-scroll"></ul>
             </div>
 
-            <!-- Estado: escaneando -->
+            <!-- Estado: cargando el cliente seleccionado -->
             <div id="scan-loading" class="relative hidden flex-col items-center py-container-margin">
                 <div class="w-40 h-40 rounded-full border-4 border-[#ffda6a] flex items-center justify-center pulse-ring-wait bg-surface-bright">
-                    <span class="material-symbols-outlined text-[64px] text-outline-variant">fingerprint</span>
+                    <span class="material-symbols-outlined text-[64px] text-outline-variant">person_search</span>
                 </div>
-                <p class="text-label-lg font-bold mt-stack-md">Identificando...</p>
-                <p class="font-label-sm text-on-surface-variant mt-unit">Comparando template en la base biométrica</p>
+                <p class="text-label-lg font-bold mt-stack-md">Cargando cliente...</p>
+                <p class="font-label-sm text-on-surface-variant mt-unit">Consultando entradas, salidas y fidelidad</p>
             </div>
 
             <!-- Estado: resultado -->
             <div id="scan-result" class="relative hidden flex-col gap-stack-md">
                 <div id="result-error" class="hidden items-center gap-2 bg-error-container text-on-error-container font-label-lg px-gutter py-stack-md rounded-lg border border-error/30">
-                    <span class="material-symbols-outlined">fingerprint_off</span>
+                    <span class="material-symbols-outlined">error</span>
                     <span id="result-error-msg"></span>
                 </div>
 
@@ -149,16 +152,16 @@
 
                     <button type="button" onclick="resetScanner()"
                             class="self-center text-label-lg text-outline hover:text-primary transition-colors py-stack-sm flex items-center gap-unit cursor-pointer">
-                        <span class="material-symbols-outlined text-[18px]">restart_alt</span> Nueva lectura
+                        <span class="material-symbols-outlined text-[18px]">restart_alt</span> Nueva búsqueda
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Escaneos recientes -->
+        <!-- Movimientos recientes -->
         <div class="bg-surface-container-lowest rounded-xl p-gutter shadow-soft flex flex-col">
             <div class="flex justify-between items-center mb-stack-md">
-                <h3 class="text-headline-sm text-on-surface">Escaneos Recientes</h3>
+                <h3 class="text-headline-sm text-on-surface">Movimientos Recientes</h3>
                 <span class="material-symbols-outlined text-on-surface-variant">history</span>
             </div>
             <ul id="lista-recientes" class="flex flex-col gap-stack-sm">
@@ -224,20 +227,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Estado del lector biométrico (se actualiza en vivo por polling) -->
-        <div class="bg-surface-container-lowest rounded-xl p-gutter shadow-soft flex items-center justify-between">
-            <div class="flex items-center gap-stack-md">
-                <span id="lector-icono" class="material-symbols-outlined @(Model.LectorConectado ? "text-tertiary" : "text-error")">sensors</span>
-                <div class="leading-tight">
-                    <p class="font-label-lg text-on-surface"><span id="lector-nombre">@Model.LectorNombre</span></p>
-                    <p class="font-label-sm text-on-surface-variant">Servicio biométrico en la PC de recepción via red</p>
-                </div>
-            </div>
-            <span id="lector-estado-badge" class="font-label-lg px-3 py-1 rounded-full @(Model.LectorConectado ? "bg-tertiary-container/10 text-tertiary border border-tertiary/20" : "bg-error-container text-on-error-container border border-error/20")">
-                @(Model.LectorConectado ? "Conectado" : "Desconectado")
-            </span>
-        </div>
     </div>
 </div>
 
@@ -271,7 +260,7 @@
         el.value = v;
     }
 
-    // ================= Checkpoint biométrico simulado (RF5-RF10) =================
+    // ================= Checkpoint manual: búsqueda y registro (RF5-RF10) =================
     const TOKEN = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
     async function postJson(url, body) {
@@ -291,45 +280,81 @@
         });
     }
 
-    function resetScanner() { mostrar('scan-idle'); }
+    let buscarTimer = null;
 
-    async function escanear() {
-        // El checkpoint identifica el dedo que se coloca en el lector contra la base
-        // de datos (1:N). Navegador llama directo al BiometricService local.
+    function resetScanner() {
+        const input = document.getElementById('busqueda-cliente');
+        if (input) input.value = '';
+        document.getElementById('resultados-busqueda').innerHTML = '';
+        mostrar('scan-idle');
+        if (input) input.focus();
+    }
+
+    function buscarClientes(texto) {
+        clearTimeout(buscarTimer);
+        const q = (texto || '').trim();
+        const cont = document.getElementById('resultados-busqueda');
+
+        if (q.length < 2) {
+            cont.innerHTML = '<li class="font-label-sm text-on-surface-variant py-2">Escriba al menos 2 caracteres.</li>';
+            return;
+        }
+
+        buscarTimer = setTimeout(async () => {
+            try {
+                const resp = await fetch('/Acceso/BuscarClientes?q=' + encodeURIComponent(q), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const clientes = await resp.json();
+                cont.innerHTML = '';
+
+                if (!clientes.length) {
+                    cont.innerHTML = '<li class="font-label-sm text-on-surface-variant py-2">No se encontraron clientes.</li>';
+                    return;
+                }
+
+                clientes.forEach(c => {
+                    const li = document.createElement('li');
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'w-full flex items-center gap-stack-sm border border-surface-variant/40 hover:border-primary rounded-lg p-stack-sm transition-colors text-left cursor-pointer';
+                    btn.onclick = () => seleccionarCliente(c.clienteId);
+
+                    const avatar = document.createElement('div');
+                    avatar.className = 'w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold shrink-0';
+                    avatar.textContent = c.inicial;
+
+                    const info = document.createElement('div');
+                    info.className = 'flex-1 min-w-0 leading-tight';
+
+                    const nombre = document.createElement('p');
+                    nombre.className = 'font-label-lg text-on-surface truncate';
+                    nombre.textContent = c.nombreMostrar;
+
+                    const detalle = document.createElement('p');
+                    detalle.className = 'font-label-sm text-on-surface-variant truncate';
+                    detalle.textContent = `Familia ${c.apellidosFamilia} · ${c.edadTexto}${c.estaDentro ? ' · Dentro' : ''}`;
+
+                    info.appendChild(nombre);
+                    info.appendChild(detalle);
+                    btn.appendChild(avatar);
+                    btn.appendChild(info);
+                    li.appendChild(btn);
+                    cont.appendChild(li);
+                });
+            } catch {
+                cont.innerHTML = '<li class="font-label-sm text-error py-2">No se pudo realizar la búsqueda.</li>';
+            }
+        }, 250);
+    }
+
+    async function seleccionarCliente(clienteId) {
         mostrar('scan-loading');
-
         try {
-            // 1) Obtener candidatos desde el servidor
-            const respCand = await fetch('/Acceso/CandidatosHuella', { headers: { 'Accept': 'application/json' } });
-            const candData = await respCand.json();
-            if (!candData.exitoso || !candData.candidatos || candData.candidatos.length === 0) {
-                document.getElementById('result-error-msg').textContent = candData.mensaje || 'No hay huellas enroladas en el sistema.';
-                document.getElementById('result-error').classList.remove('hidden');
-                document.getElementById('result-cliente').classList.add('hidden');
-                mostrar('scan-result');
-                return;
-            }
-
-            // 2) Llamar directo al BiometricService local
-            const templates = candData.candidatos.map(c => c.templateBase64);
-            const respId = await fetch('http://localhost:5050/api/biometria/identificar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ templatesBase64: templates }),
-                mode: 'cors'
-            });
-            const idData = await respId.json();
-
-            // 3) Enviar resultado al servidor para armar vista y registrar logs
-            let clienteIdResuelto = null;
-            if (idData.exitoso && idData.coincide && idData.indiceCoincidencia >= 0 && idData.indiceCoincidencia < candData.candidatos.length) {
-                clienteIdResuelto = candData.candidatos[idData.indiceCoincidencia].clienteId;
-            }
-
-            const data = await postJson('/Acceso/IdentificarResultado', { indice: idData.indiceCoincidencia, clienteIdResuelto: clienteIdResuelto });
+            const data = await postJson('/Acceso/IdentificarResultado', { clienteIdResuelto: clienteId });
             pintarResultado(data);
         } catch {
-            document.getElementById('result-error-msg').textContent = 'Error al comunicarse con el lector biométrico (localhost:5050).';
+            document.getElementById('result-error-msg').textContent = 'No se pudo cargar el cliente seleccionado.';
             document.getElementById('result-error').classList.remove('hidden');
             document.getElementById('result-cliente').classList.add('hidden');
             mostrar('scan-result');
@@ -361,9 +386,9 @@
         clienteBox.classList.remove('hidden'); clienteBox.classList.add('flex');
 
         document.getElementById('result-avatar').textContent = data.inicial;
-        document.getElementById('result-nombre').textContent = `${data.nombre} · ${data.edad} años`;
+        document.getElementById('result-nombre').textContent = data.nombreMostrar;
         document.getElementById('result-familia').textContent = `Familia ${data.apellidosFamilia}`;
-        document.getElementById('result-edad').textContent = `${data.edad} años`;
+        document.getElementById('result-edad').textContent = data.edadTexto;
         document.getElementById('result-checks').innerHTML = estrellas(data.conteoChecks, data.checksParaPremio);
 
         const checksHoyBox = document.getElementById('result-checks-hoy');
@@ -531,40 +556,5 @@
         location.reload();
     }
 
-    // ================= Estado en vivo del lector (polling directo al localhost) =================
-    // El navegador llama directo al BiometricService local (PC de recepción).
-    // Ya no pasa por el servidor IIS.
-    function pintarEstadoLector(estado) {
-        const icono = document.getElementById('lector-icono');
-        const nombre = document.getElementById('lector-nombre');
-        const badge = document.getElementById('lector-estado-badge');
-        if (!badge) return;
-
-        const conectado = !!estado.lectorConectado;
-        icono.className = 'material-symbols-outlined ' + (conectado ? 'text-tertiary' : 'text-error');
-        badge.className = 'font-label-lg px-3 py-1 rounded-full ' +
-            (conectado
-                ? 'bg-tertiary-container/10 text-tertiary border border-tertiary/20'
-                : 'bg-error-container text-on-error-container border border-error/20');
-        badge.textContent = conectado ? 'Conectado' : 'Desconectado';
-        if (conectado && estado.nombreDispositivo) nombre.textContent = estado.nombreDispositivo;
-        else if (!conectado) nombre.textContent = nombre.textContent || 'Sin lector';
-        badge.dataset.ocupado = estado.ocupado ? '1' : '0';
-    }
-
-    async function actualizarEstadoLector() {
-        try {
-            const resp = await fetch('http://localhost:5050/api/biometria/estado', {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' },
-                mode: 'cors'
-            });
-            if (!resp.ok) return;
-            pintarEstadoLector(await resp.json());
-        } catch { /* lector no disponible: la tarjeta conserva el último estado */ }
-    }
-
-    setInterval(actualizarEstadoLector, 4000);
-    actualizarEstadoLector();
 </script>
 }

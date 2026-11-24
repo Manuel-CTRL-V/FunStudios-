@@ -1,11 +1,12 @@
 using FunStudiosWebApp.Services;
+using FunStudiosWebApp.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FunStudiosWebApp.Controllers;
 
 /// <summary>
-/// Apartado de familias: listado general, perfil familiar con sus tutores
+/// Apartado de familias: listado general, creación, perfil familiar con sus tutores
 /// y los niños asociados (RF2).
 /// </summary>
 [Authorize]
@@ -36,6 +37,27 @@ public class FamiliasController : Controller
         if (familia == null) return NotFound();
 
         return View(familia);
+    }
+
+    // GET: /Familias/Crear
+    public IActionResult Crear()
+    {
+        return View(new FamiliaCrearViewModel());
+    }
+
+    // POST: /Familias/Crear
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Crear(FamiliaCrearViewModel modelo)
+    {
+        if (!ModelState.IsValid) return View(modelo);
+
+        var (exito, mensaje, familiaId) = await _familiaService.CrearAsync(modelo);
+        TempData[exito ? "Mensaje" : "Error"] = mensaje;
+
+        if (!exito) return View(modelo);
+
+        return RedirectToAction("Detalles", new { id = familiaId });
     }
 
     // POST: /Familias/AgregarTutor

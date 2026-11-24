@@ -1,0 +1,103 @@
+@model FamiliaCrearViewModel
+@{
+    ViewData["Title"] = "Nueva Familia";
+}
+
+<!-- Encabezado -->
+<div class="mb-stack-lg">
+    <h2 class="text-display-lg text-on-surface mb-2">Nueva Familia</h2>
+    <p class="text-body-lg text-on-surface-variant">
+        Registre los apellidos de la familia y su tutor principal. Después podrá agregar más tutores y niños.
+    </p>
+</div>
+
+<form asp-controller="Familias" asp-action="Crear" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="max-w-3xl mx-auto flex flex-col gap-gutter">
+
+        <!-- Datos de la familia -->
+        <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft">
+            <div class="flex items-center gap-2 mb-stack-md">
+                <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary-container text-sm">family_restroom</span>
+                </div>
+                <h3 class="text-headline-sm text-on-surface">Datos de la Familia</h3>
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label asp-for="ApellidosFamilia" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Apellidos de la Familia</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">badge</span>
+                    <input asp-for="ApellidosFamilia" placeholder="ej. Pérez-García"
+                           class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                </div>
+                <span asp-validation-for="ApellidosFamilia" class="font-label-sm text-error ml-4"></span>
+            </div>
+        </div>
+
+        <!-- Tutor principal -->
+        <div class="bg-surface-container-lowest rounded-[2rem] p-gutter shadow-soft">
+            <div class="flex items-center gap-2 mb-stack-md">
+                <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary-container text-sm">person</span>
+                </div>
+                <div>
+                    <h3 class="text-headline-sm text-on-surface">Tutor Principal</h3>
+                    <p class="font-label-sm text-on-surface-variant">El tutor principal es obligatorio.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                <div class="flex flex-col gap-1">
+                    <label asp-for="NombreTutor" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Nombre del Tutor</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">person</span>
+                        <input asp-for="NombreTutor" placeholder="ej. Laura Ortega"
+                               class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                    </div>
+                    <span asp-validation-for="NombreTutor" class="font-label-sm text-error ml-4"></span>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label asp-for="TelefonoTutor" class="font-label-sm text-label-sm text-on-surface-variant ml-4">Teléfono del Tutor</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">phone_iphone</span>
+                        <input asp-for="TelefonoTutor" placeholder="809-000-0000" type="tel" inputmode="numeric" maxlength="12"
+                               oninput="formatTelefono(this)"
+                               class="w-full bg-surface-container border-2 border-transparent focus:border-primary rounded-full py-3 pl-12 pr-4 h-[48px] focus:outline-none transition-all placeholder:text-outline-variant" />
+                    </div>
+                    <span asp-validation-for="TelefonoTutor" class="font-label-sm text-error ml-4"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen de errores del servidor -->
+        <div asp-validation-summary="All" class="text-error font-label-md"></div>
+
+        <!-- Botón final -->
+        <div class="flex justify-end gap-stack-md">
+            <a asp-controller="Familias" asp-action="Index"
+               class="flex items-center gap-2 px-6 py-2 bg-surface-container-high text-primary font-label-lg rounded-full hover:bg-surface-dim transition-colors shadow-soft">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="bg-primary hover:bg-surface-tint text-on-primary font-headline-sm px-8 rounded-full shadow-high btn-press transition-all duration-200 flex items-center gap-2 h-[64px] cursor-pointer">
+                <span class="material-symbols-outlined">group_add</span>
+                Crear Familia
+            </button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function formatTelefono(el) {
+            let v = el.value.replace(/\D/g, '').substring(0, 10);
+            if (v.length > 6) v = v.substring(0, 3) + '-' + v.substring(3, 6) + '-' + v.substring(6);
+            else if (v.length > 3) v = v.substring(0, 3) + '-' + v.substring(3);
+            el.value = v;
+        }
+    </script>
+}

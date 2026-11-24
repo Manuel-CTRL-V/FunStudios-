@@ -139,7 +139,7 @@ else
 
                 <a asp-controller="Clientes" asp-action="Index"
                    class="flex items-center gap-stack-md px-gutter py-touch-target rounded-lg mx-stack-md transition-all btn-press @(controladorActual == "Clientes" ? "bg-primary-container text-on-primary-container" : "text-on-surface-variant hover:bg-surface-variant")">
-                    <span class="material-symbols-outlined">fingerprint</span>
+                    <span class="material-symbols-outlined">groups</span>
                     <span class="font-label-lg text-[17px]">Clientes</span>
                 </a>
 
@@ -171,10 +171,6 @@ else
                            class="flex items-center gap-2 px-gutter py-3 rounded-lg text-[16px] @(controladorActual == "Reportes" && accionActual == "InteligenciaNegocio" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
                             <span class="material-symbols-outlined text-[18px]">insights</span> Inteligencia de Negocio
                         </a>
-                        <a asp-controller="Reportes" asp-action="LogsBiometrico"
-                           class="flex items-center gap-2 px-gutter py-3 rounded-lg text-[16px] @(controladorActual == "Reportes" && accionActual == "LogsBiometrico" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:bg-surface-variant")">
-                            <span class="material-symbols-outlined text-[18px]">bug_report</span> Logs Biométricos
-                        </a>
                     </div>
                 </div>
 
@@ -192,7 +188,7 @@ else
                 <a asp-controller="Clientes" asp-action="Crear"
                    class="w-full flex items-center justify-center gap-unit bg-secondary text-on-secondary font-label-lg py-touch-target rounded-full shadow-soft btn-press hover:bg-secondary-container transition-colors">
                     <span class="material-symbols-outlined">person_add</span>
-                    Enrolar Nuevo Niño
+                    Registrar Cliente
                 </a>
 
                 <form asp-controller="Account" asp-action="Logout" method="post" class="mt-stack-md">
